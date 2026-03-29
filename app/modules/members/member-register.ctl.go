@@ -22,7 +22,7 @@ type RegisterRequestController struct {
 func (c *Controller) RegisterMemberController(ctx *gin.Context) {
 	var req RegisterRequestController
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		_ = base.BadRequest(ctx, "invalid-request", gin.H{"reason": "invalid-body"})
+		_ = base.BadRequest(ctx, "invalid-request", gin.H{"reason": "invalid-body", "detail": err.Error()})
 		return
 	}
 
