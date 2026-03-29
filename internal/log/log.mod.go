@@ -1,6 +1,6 @@
 package log
 
-import "mcop/internal/config"
+import "balance/internal/config"
 
 type Module struct {
 	Svc *Service

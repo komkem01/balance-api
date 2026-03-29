@@ -1,8 +1,8 @@
 package config
 
 import (
-	dbdto "mcop/internal/database/dto"
-	rddto "mcop/internal/redis/dto"
+	dbdto "balance/internal/database/dto"
+	rddto "balance/internal/redis/dto"
 )
 
 type Database struct {

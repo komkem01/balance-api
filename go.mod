@@ -1,4 +1,4 @@
-module mcop
+module balance
 
 go 1.25.1
 

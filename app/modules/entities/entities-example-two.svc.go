@@ -3,8 +3,8 @@ package entities
 import (
 	"context"
 
-	"mcop/app/modules/entities/ent"
-	entitiesinf "mcop/app/modules/entities/inf"
+	"balance/app/modules/entities/ent"
+	entitiesinf "balance/app/modules/entities/inf"
 
 	"github.com/google/uuid"
 )

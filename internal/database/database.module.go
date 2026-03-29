@@ -3,8 +3,8 @@ package database
 import (
 	"context"
 
-	dto "mcop/internal/database/dto"
-	"mcop/internal/provider"
+	dto "balance/internal/database/dto"
+	"balance/internal/provider"
 )
 
 type DatabaseModule struct {

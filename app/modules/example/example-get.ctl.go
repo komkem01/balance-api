@@ -1,9 +1,9 @@
 package example
 
 import (
-	"mcop/app/utils"
-	"mcop/app/utils/base"
-	"mcop/config/i18n"
+	"balance/app/utils"
+	"balance/app/utils/base"
+	"balance/config/i18n"
 
 	"github.com/gin-gonic/gin"
 	"github.com/oklog/ulid/v2"

@@ -4,19 +4,19 @@ import (
 	"log/slog"
 	"sync"
 
-	"mcop/app/modules/entities"
-	"mcop/app/modules/example"
-	"mcop/app/modules/sentry"
-	"mcop/app/modules/specs"
-	"mcop/internal/config"
-	"mcop/internal/database"
-	"mcop/internal/log"
-	"mcop/internal/otel/collector"
+	"balance/app/modules/entities"
+	"balance/app/modules/example"
+	"balance/app/modules/sentry"
+	"balance/app/modules/specs"
+	"balance/internal/config"
+	"balance/internal/database"
+	"balance/internal/log"
+	"balance/internal/otel/collector"
 
-	exampletwo "mcop/app/modules/example-two"
+	exampletwo "balance/app/modules/example-two"
 
-	appConf "mcop/config"
-	// "mcop/app/modules/kafka"
+	appConf "balance/config"
+	// "balance/app/modules/kafka"
 )
 
 type Modules struct {

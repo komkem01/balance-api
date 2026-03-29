@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"mcop/app/modules"
+	"balance/app/modules"
 
 	"github.com/gin-gonic/gin"
 )

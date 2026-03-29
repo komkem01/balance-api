@@ -1,8 +1,8 @@
 package example
 
 import (
-	"mcop/app/utils"
-	"mcop/app/utils/base"
+	"balance/app/utils"
+	"balance/app/utils/base"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

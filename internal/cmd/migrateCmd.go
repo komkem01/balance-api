@@ -3,11 +3,11 @@ package cmd
 import (
 	"strings"
 
-	appConf "mcop/config"
-	"mcop/database/migrations"
-	"mcop/internal/config"
-	"mcop/internal/database"
-	"mcop/internal/log"
+	appConf "balance/config"
+	"balance/database/migrations"
+	"balance/internal/config"
+	"balance/internal/database"
+	"balance/internal/log"
 
 	"github.com/spf13/cobra"
 	"github.com/uptrace/bun/migrate"

@@ -2,7 +2,7 @@ package otel
 
 import (
 	"context"
-	"mcop/internal/log"
+	"balance/internal/log"
 	"time"
 
 	"go.opentelemetry.io/otel"
