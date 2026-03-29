@@ -42,6 +42,8 @@ func apiSystem(r *gin.RouterGroup, mod *modules.Modules) {
 }
 
 func apiMember(r *gin.RouterGroup, mod *modules.Modules) {
+	r.GET("/me", requireMemberJWT(mod), mod.Member.Ctl.InfoMeMemberController)
+
 	members := r.Group("/members")
 	{
 		members.GET("", mod.Member.Ctl.ListMemberController)
@@ -84,19 +86,31 @@ func apiBalance(r *gin.RouterGroup, mod *modules.Modules) {
 		transactions := Balances.Group("/transactions")
 		{
 			transactions.GET("", mod.Transaction.Ctl.ListTransactionController)
-			transactions.POST("", mod.Transaction.Ctl.CreateTransactionController)
-			transactions.GET("/:id", mod.Transaction.Ctl.InfoTransactionController)
-			transactions.PATCH("/:id", mod.Transaction.Ctl.UpdateTransactionController)
-			transactions.DELETE("/:id", mod.Transaction.Ctl.DeleteTransactionController)
+			transactions.POST("", requireMemberJWT(mod), ownerTransactionCreateMiddleware(mod), mod.Transaction.Ctl.CreateTransactionController)
+			transactions.GET("/:id", requireMemberJWT(mod), ownerTransactionReadMiddleware(mod), mod.Transaction.Ctl.InfoTransactionController)
+			transactions.PATCH("/:id", requireMemberJWT(mod), ownerTransactionUpdateMiddleware(mod), mod.Transaction.Ctl.UpdateTransactionController)
+			transactions.DELETE("/:id", requireMemberJWT(mod), ownerTransactionDeleteMiddleware(mod), mod.Transaction.Ctl.DeleteTransactionController)
 		}
 
 		budgets := Balances.Group("/budgets")
 		{
 			budgets.GET("", mod.Budget.Ctl.ListBudgetController)
-			budgets.POST("", mod.Budget.Ctl.CreateBudgetController)
-			budgets.GET("/:id", mod.Budget.Ctl.InfoBudgetController)
-			budgets.PATCH("/:id", mod.Budget.Ctl.UpdateBudgetController)
-			budgets.DELETE("/:id", mod.Budget.Ctl.DeleteBudgetController)
+			budgets.POST("", requireMemberJWT(mod), ownerBudgetCreateMiddleware(mod), mod.Budget.Ctl.CreateBudgetController)
+			budgets.GET("/:id", requireMemberJWT(mod), ownerBudgetReadMiddleware(mod), mod.Budget.Ctl.InfoBudgetController)
+			budgets.PATCH("/:id", requireMemberJWT(mod), ownerBudgetUpdateMiddleware(mod), mod.Budget.Ctl.UpdateBudgetController)
+			budgets.DELETE("/:id", requireMemberJWT(mod), ownerBudgetDeleteMiddleware(mod), mod.Budget.Ctl.DeleteBudgetController)
+		}
+	}
+}
+
+func apiPublic(r *gin.RouterGroup, mod *modules.Modules) {
+	publics := r.Group("/public")
+	{
+		auths := publics.Group("/auth")
+		{
+			auths.POST("/login", mod.Member.Ctl.LoginMemberController)
+			auths.POST("/refresh", mod.Member.Ctl.RefreshMemberTokenController)
+			auths.POST("/register", mod.Member.Ctl.RegisterMemberController)
 		}
 	}
 }

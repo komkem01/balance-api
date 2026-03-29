@@ -11,6 +11,7 @@ type MemberStore interface {
 	entitiesinf.MemberEntity
 	entitiesinf.GenderEntity
 	entitiesinf.PrefixEntity
+	entitiesinf.MemberAccountEntity
 }
 
 type Service struct {
