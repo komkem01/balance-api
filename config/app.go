@@ -1,10 +1,18 @@
 package config
 
 import (
+	"balance/app/modules/budgets"
+	"balance/app/modules/categories"
 	"balance/app/modules/example"
 	exampletwo "balance/app/modules/example-two"
+	genders "balance/app/modules/genders"
+	memberaccounts "balance/app/modules/member-accounts"
+	members "balance/app/modules/members"
+	prefixes "balance/app/modules/prefixes"
 	"balance/app/modules/sentry"
 	"balance/app/modules/specs"
+	"balance/app/modules/transactions"
+	wallets "balance/app/modules/wallets"
 	"balance/internal/kafka"
 	"balance/internal/log"
 	"balance/internal/otel/collector"
@@ -36,6 +44,15 @@ type Config struct {
 	Example example.Config
 
 	ExampleTwo exampletwo.Config
+
+	Gender        genders.Config
+	Prefix        prefixes.Config
+	Member        members.Config
+	MemberAccount memberaccounts.Config
+	Wallet        wallets.Config
+	Category      categories.Config
+	Transaction   transactions.Config
+	Budget        budgets.Config
 }
 
 var App = Config{

@@ -39,4 +39,7 @@ func Router(app *gin.Engine, mod *modules.Modules) {
 	}))
 
 	api(app.Group("/api/v1"), mod)
+	apiSystem(app.Group("/api/v1"), mod)
+	apiMember(app.Group("/api/v1"), mod)
+	apiBalance(app.Group("/api/v1"), mod)
 }

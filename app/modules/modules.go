@@ -4,10 +4,18 @@ import (
 	"log/slog"
 	"sync"
 
+	"balance/app/modules/budgets"
+	"balance/app/modules/categories"
 	"balance/app/modules/entities"
 	"balance/app/modules/example"
+	"balance/app/modules/genders"
+	memberaccounts "balance/app/modules/member-accounts"
+	"balance/app/modules/members"
+	"balance/app/modules/prefixes"
 	"balance/app/modules/sentry"
 	"balance/app/modules/specs"
+	"balance/app/modules/transactions"
+	"balance/app/modules/wallets"
 	"balance/internal/config"
 	"balance/internal/database"
 	"balance/internal/log"
@@ -28,8 +36,16 @@ type Modules struct {
 	DB     *database.DatabaseModule
 	ENT    *entities.Module
 	// Kafka *kafka.Module
-	Example  *example.Module
-	Example2 *exampletwo.Module
+	Example       *example.Module
+	Example2      *exampletwo.Module
+	Gender        *genders.Module
+	Prefix        *prefixes.Module
+	Member        *members.Module
+	MemberAccount *memberaccounts.Module
+	Wallet        *wallets.Module
+	Category      *categories.Module
+	Transaction   *transactions.Module
+	Budget        *budgets.Module
 }
 
 func modulesInit() {
@@ -47,17 +63,33 @@ func modulesInit() {
 	entitiesMod := entities.New(db.Svc.DB())
 	exampleMod := example.New(config.Conf[example.Config](confMod.Svc), entitiesMod.Svc)
 	exampleMod2 := exampletwo.New(config.Conf[exampletwo.Config](confMod.Svc), entitiesMod.Svc)
+	genderMod := genders.New(config.Conf[genders.Config](confMod.Svc), entitiesMod.Svc)
+	prefixMod := prefixes.New(config.Conf[prefixes.Config](confMod.Svc), entitiesMod.Svc)
+	memberMod := members.New(config.Conf[members.Config](confMod.Svc), entitiesMod.Svc)
+	memberAccountMod := memberaccounts.New(config.Conf[memberaccounts.Config](confMod.Svc), entitiesMod.Svc)
+	walletMod := wallets.New(config.Conf[wallets.Config](confMod.Svc), entitiesMod.Svc)
+	categoryMod := categories.New(config.Conf[categories.Config](confMod.Svc), entitiesMod.Svc)
+	transactionMod := transactions.New(config.Conf[transactions.Config](confMod.Svc), entitiesMod.Svc)
+	budgetMod := budgets.New(config.Conf[budgets.Config](confMod.Svc), entitiesMod.Svc)
 	// kafka := kafka.New(&conf.Kafka)
 	mod = &Modules{
-		Conf:     confMod,
-		Specs:    specsMod,
-		Log:      logMod,
-		OTEL:     otel,
-		Sentry:   sentryMod,
-		DB:       db,
-		ENT:      entitiesMod,
-		Example:  exampleMod,
-		Example2: exampleMod2,
+		Conf:          confMod,
+		Specs:         specsMod,
+		Log:           logMod,
+		OTEL:          otel,
+		Sentry:        sentryMod,
+		DB:            db,
+		ENT:           entitiesMod,
+		Example:       exampleMod,
+		Example2:      exampleMod2,
+		Gender:        genderMod,
+		Prefix:        prefixMod,
+		Member:        memberMod,
+		MemberAccount: memberAccountMod,
+		Wallet:        walletMod,
+		Category:      categoryMod,
+		Transaction:   transactionMod,
+		Budget:        budgetMod,
 	}
 
 	log.Infof("all modules initialized")
