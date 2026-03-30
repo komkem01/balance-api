@@ -61,6 +61,177 @@ func writeBody(ctx *gin.Context, body []byte) {
 	ctx.Request.ContentLength = int64(len(body))
 }
 
+func resolveMemberIDFromContext(ctx *gin.Context) string {
+	memberID, ok := ctx.Get("member_id")
+	if !ok {
+		return ""
+	}
+	memberIDStr, ok := memberID.(string)
+	if !ok {
+		return ""
+	}
+	return strings.TrimSpace(memberIDStr)
+}
+
+func upsertMemberIDBodyMiddleware(force bool) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		memberIDStr := resolveMemberIDFromContext(ctx)
+		if memberIDStr == "" {
+			_ = base.Unauthorized(ctx, "unauthorized", gin.H{"reason": "missing-member-id"})
+			ctx.Abort()
+			return
+		}
+
+		body, err := readAndRestoreBody(ctx)
+		if err != nil {
+			_ = base.BadRequest(ctx, "invalid-request", gin.H{"reason": "invalid-body"})
+			ctx.Abort()
+			return
+		}
+
+		trimmed := strings.TrimSpace(string(body))
+		if trimmed == "" {
+			if !force {
+				writeBody(ctx, body)
+				ctx.Next()
+				return
+			}
+			body = []byte("{}")
+		}
+
+		payload := map[string]any{}
+		if err := json.Unmarshal(body, &payload); err != nil {
+			_ = base.BadRequest(ctx, "invalid-request", gin.H{"reason": "invalid-body"})
+			ctx.Abort()
+			return
+		}
+
+		if force {
+			payload["member_id"] = memberIDStr
+		} else {
+			if _, exists := payload["member_id"]; exists {
+				payload["member_id"] = memberIDStr
+			}
+		}
+
+		newBody, err := json.Marshal(payload)
+		if err != nil {
+			_ = base.BadRequest(ctx, "invalid-request", gin.H{"reason": "invalid-body"})
+			ctx.Abort()
+			return
+		}
+
+		writeBody(ctx, newBody)
+		ctx.Next()
+	}
+}
+
+func forceMemberIDBodyMiddleware() gin.HandlerFunc {
+	return upsertMemberIDBodyMiddleware(true)
+}
+
+func sanitizeMemberIDBodyMiddleware() gin.HandlerFunc {
+	return upsertMemberIDBodyMiddleware(false)
+}
+
+func forceMemberIDQueryMiddleware(key string) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		memberIDStr := resolveMemberIDFromContext(ctx)
+		if memberIDStr == "" {
+			_ = base.Unauthorized(ctx, "unauthorized", gin.H{"reason": "missing-member-id"})
+			ctx.Abort()
+			return
+		}
+
+		query := ctx.Request.URL.Query()
+		query.Set(key, memberIDStr)
+		ctx.Request.URL.RawQuery = query.Encode()
+
+		ctx.Next()
+	}
+}
+
+func ownerMemberAccountByParamMiddleware(mod *modules.Modules) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		memberIDStr := resolveMemberIDFromContext(ctx)
+		if memberIDStr == "" {
+			_ = base.Unauthorized(ctx, "unauthorized", gin.H{"reason": "missing-member-id"})
+			ctx.Abort()
+			return
+		}
+
+		id := strings.TrimSpace(ctx.Param("id"))
+		item, err := mod.ENT.Svc.GetMemberAccountByID(ctx, id)
+		if err != nil {
+			_ = base.BadRequest(ctx, "member-account-invalid-id", gin.H{"field": "id", "reason": "invalid"})
+			ctx.Abort()
+			return
+		}
+
+		if item.MemberID == nil || item.MemberID.String() != memberIDStr {
+			_ = base.Unauthorized(ctx, "unauthorized", gin.H{"reason": "forbidden-member-account"})
+			ctx.Abort()
+			return
+		}
+
+		ctx.Next()
+	}
+}
+
+func ownerWalletByParamMiddleware(mod *modules.Modules) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		memberIDStr := resolveMemberIDFromContext(ctx)
+		if memberIDStr == "" {
+			_ = base.Unauthorized(ctx, "unauthorized", gin.H{"reason": "missing-member-id"})
+			ctx.Abort()
+			return
+		}
+
+		id := strings.TrimSpace(ctx.Param("id"))
+		item, err := mod.ENT.Svc.GetWalletByID(ctx, id)
+		if err != nil {
+			_ = base.BadRequest(ctx, "wallet-invalid-id", gin.H{"field": "id", "reason": "invalid"})
+			ctx.Abort()
+			return
+		}
+
+		if item.MemberID == nil || item.MemberID.String() != memberIDStr {
+			_ = base.Unauthorized(ctx, "unauthorized", gin.H{"reason": "forbidden-wallet"})
+			ctx.Abort()
+			return
+		}
+
+		ctx.Next()
+	}
+}
+
+func ownerCategoryByParamMiddleware(mod *modules.Modules) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		memberIDStr := resolveMemberIDFromContext(ctx)
+		if memberIDStr == "" {
+			_ = base.Unauthorized(ctx, "unauthorized", gin.H{"reason": "missing-member-id"})
+			ctx.Abort()
+			return
+		}
+
+		id := strings.TrimSpace(ctx.Param("id"))
+		item, err := mod.ENT.Svc.GetCategoryByID(ctx, id)
+		if err != nil {
+			_ = base.BadRequest(ctx, "category-invalid-id", gin.H{"field": "id", "reason": "invalid"})
+			ctx.Abort()
+			return
+		}
+
+		if item.MemberID == nil || item.MemberID.String() != memberIDStr {
+			_ = base.Unauthorized(ctx, "unauthorized", gin.H{"reason": "forbidden-category"})
+			ctx.Abort()
+			return
+		}
+
+		ctx.Next()
+	}
+}
+
 func ownerTransactionCreateMiddleware(mod *modules.Modules) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		memberID, _ := ctx.Get("member_id")

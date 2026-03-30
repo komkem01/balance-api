@@ -88,7 +88,7 @@ func (s *Service) UpdateTransaction(ctx context.Context, req *UpdateRequestServi
 		return nil, ErrTransactionDateInvalid
 	}
 
-	item, err := s.db.UpdateTransaction(ctx, req.ID, req.WalletID, req.CategoryID, req.Amount, transactionType, transactionDate, req.Note, req.ImageURL)
+	item, err := s.db.UpdateTransactionWithWalletAdjust(ctx, req.ID, req.WalletID, req.CategoryID, req.Amount, transactionType, transactionDate, req.Note, req.ImageURL)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrTransactionNotFound

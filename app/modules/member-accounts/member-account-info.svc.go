@@ -17,6 +17,7 @@ type InfoResponseService struct {
 	ID        uuid.UUID  `json:"id"`
 	MemberID  *uuid.UUID `json:"member_id"`
 	Username  string     `json:"username"`
+	Password  string     `json:"password"`
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
 }
@@ -38,6 +39,7 @@ func (s *Service) InfoMemberAccount(ctx context.Context, req *InfoRequestService
 		ID:        item.ID,
 		MemberID:  item.MemberID,
 		Username:  item.Username,
+		Password:  item.Password,
 		CreatedAt: item.CreatedAt,
 		UpdatedAt: item.UpdatedAt,
 	}, nil

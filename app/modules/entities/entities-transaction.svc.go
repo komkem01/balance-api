@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/uptrace/bun"
 )
 
 var _ entitiesinf.TransactionEntity = (*Service)(nil)
@@ -25,6 +26,32 @@ func parseTransactionID(value *string) (*uuid.UUID, error) {
 		return nil, err
 	}
 	return &id, nil
+}
+
+func transactionWalletDelta(amount float64, transactionType ent.TransactionType) float64 {
+	if transactionType == ent.TransactionTypeExpense {
+		return -amount
+	}
+	return amount
+}
+
+func (s *Service) adjustWalletBalanceTx(ctx context.Context, tx bun.Tx, walletID uuid.UUID, delta float64) error {
+	wallet := &ent.WalletEntity{}
+	if err := tx.NewSelect().
+		Model(wallet).
+		Where("wallet.id = ?", walletID).
+		For("UPDATE").
+		Scan(ctx); err != nil {
+		return err
+	}
+
+	wallet.Balance += delta
+	_, err := tx.NewUpdate().
+		Model(wallet).
+		WherePK().
+		Column("balance", "updated_at").
+		Exec(ctx)
+	return err
 }
 
 func (s *Service) CreateTransaction(ctx context.Context, walletID *string, categoryID *string, amount float64, transactionType ent.TransactionType, transactionDate *time.Time, note string, imageURL string) (*ent.TransactionEntity, error) {
@@ -52,6 +79,48 @@ func (s *Service) CreateTransaction(ctx context.Context, walletID *string, categ
 	if err != nil {
 		return nil, err
 	}
+	return model, nil
+}
+
+func (s *Service) CreateTransactionWithWalletAdjust(ctx context.Context, walletID *string, categoryID *string, amount float64, transactionType ent.TransactionType, transactionDate *time.Time, note string, imageURL string) (*ent.TransactionEntity, error) {
+	wid, err := parseTransactionID(walletID)
+	if err != nil {
+		return nil, err
+	}
+	cid, err := parseTransactionID(categoryID)
+	if err != nil {
+		return nil, err
+	}
+
+	model := &ent.TransactionEntity{
+		ID:              uuid.New(),
+		WalletID:        wid,
+		CategoryID:      cid,
+		Amount:          amount,
+		Type:            transactionType,
+		TransactionDate: transactionDate,
+		Note:            strings.TrimSpace(note),
+		ImageURL:        strings.TrimSpace(imageURL),
+	}
+
+	err = s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		if model.WalletID != nil {
+			delta := transactionWalletDelta(model.Amount, model.Type)
+			if err := s.adjustWalletBalanceTx(ctx, tx, *model.WalletID, delta); err != nil {
+				return err
+			}
+		}
+
+		if _, err := tx.NewInsert().Model(model).Exec(ctx); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	return model, nil
 }
 
@@ -118,6 +187,98 @@ func (s *Service) UpdateTransaction(ctx context.Context, id string, walletID *st
 	return model, nil
 }
 
+func (s *Service) UpdateTransactionWithWalletAdjust(ctx context.Context, id string, walletID *string, categoryID *string, amount *float64, transactionType *ent.TransactionType, transactionDate *time.Time, note *string, imageURL *string) (*ent.TransactionEntity, error) {
+	uid, err := uuid.Parse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	var updated *ent.TransactionEntity
+	err = s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		model := &ent.TransactionEntity{}
+		if err := tx.NewSelect().
+			Model(model).
+			Where("transaction.id = ?", uid).
+			For("UPDATE").
+			Scan(ctx); err != nil {
+			return err
+		}
+
+		oldWalletID := model.WalletID
+		oldAmount := model.Amount
+		oldType := model.Type
+
+		if walletID != nil {
+			wid, err := parseTransactionID(walletID)
+			if err != nil {
+				return err
+			}
+			model.WalletID = wid
+		}
+		if categoryID != nil {
+			cid, err := parseTransactionID(categoryID)
+			if err != nil {
+				return err
+			}
+			model.CategoryID = cid
+		}
+		if amount != nil {
+			model.Amount = *amount
+		}
+		if transactionType != nil {
+			model.Type = *transactionType
+		}
+		if transactionDate != nil {
+			model.TransactionDate = transactionDate
+		}
+		if note != nil {
+			model.Note = strings.TrimSpace(*note)
+		}
+		if imageURL != nil {
+			model.ImageURL = strings.TrimSpace(*imageURL)
+		}
+
+		oldDelta := transactionWalletDelta(oldAmount, oldType)
+		newDelta := transactionWalletDelta(model.Amount, model.Type)
+
+		if oldWalletID != nil && model.WalletID != nil && *oldWalletID == *model.WalletID {
+			net := newDelta - oldDelta
+			if net != 0 {
+				if err := s.adjustWalletBalanceTx(ctx, tx, *model.WalletID, net); err != nil {
+					return err
+				}
+			}
+		} else {
+			if oldWalletID != nil {
+				if err := s.adjustWalletBalanceTx(ctx, tx, *oldWalletID, -oldDelta); err != nil {
+					return err
+				}
+			}
+			if model.WalletID != nil {
+				if err := s.adjustWalletBalanceTx(ctx, tx, *model.WalletID, newDelta); err != nil {
+					return err
+				}
+			}
+		}
+
+		if _, err := tx.NewUpdate().
+			Model(model).
+			WherePK().
+			Column("wallet_id", "category_id", "amount", "type", "transaction_date", "note", "image_url", "updated_at").
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		updated = model
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return updated, nil
+}
+
 func (s *Service) DeleteTransaction(ctx context.Context, id string) error {
 	uid, err := uuid.Parse(id)
 	if err != nil {
@@ -125,6 +286,40 @@ func (s *Service) DeleteTransaction(ctx context.Context, id string) error {
 	}
 	_, err = s.db.NewDelete().Model(&ent.TransactionEntity{}).Where("id = ?", uid).Exec(ctx)
 	return err
+}
+
+func (s *Service) DeleteTransactionWithWalletAdjust(ctx context.Context, id string) error {
+	uid, err := uuid.Parse(id)
+	if err != nil {
+		return err
+	}
+
+	return s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		model := &ent.TransactionEntity{}
+		if err := tx.NewSelect().
+			Model(model).
+			Where("transaction.id = ?", uid).
+			For("UPDATE").
+			Scan(ctx); err != nil {
+			return err
+		}
+
+		if model.WalletID != nil {
+			delta := -transactionWalletDelta(model.Amount, model.Type)
+			if err := s.adjustWalletBalanceTx(ctx, tx, *model.WalletID, delta); err != nil {
+				return err
+			}
+		}
+
+		if _, err := tx.NewDelete().
+			Model(&ent.TransactionEntity{}).
+			Where("id = ?", uid).
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		return nil
+	})
 }
 
 func (s *Service) ListTransactions(ctx context.Context, walletID *string, categoryID *string, transactionType *ent.TransactionType) ([]*ent.TransactionEntity, error) {

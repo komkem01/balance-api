@@ -14,5 +14,5 @@ func (s *Service) DeleteMember(ctx context.Context, req *DeleteRequestService) e
 	if _, err := uuid.Parse(req.ID); err != nil {
 		return ErrMemberInvalidID
 	}
-	return s.db.DeleteMember(ctx, req.ID)
+	return s.db.DeleteMemberWithAccounts(ctx, req.ID)
 }

@@ -2,6 +2,8 @@ package members
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"strings"
 	"time"
 
@@ -52,27 +54,53 @@ func (s *Service) RegisterMember(ctx context.Context, req *RegisterRequestServic
 		}
 	}
 
-	member, err := s.CreateMember(ctx, &CreateRequestService{
-		GenderID:    req.GenderID,
-		PrefixID:    req.PrefixID,
-		FirstName:   req.FirstName,
-		LastName:    req.LastName,
-		DisplayName: req.DisplayName,
-		Phone:       req.Phone,
-	})
-	if err != nil {
-		return nil, err
+	if req.GenderID != nil {
+		v := strings.TrimSpace(*req.GenderID)
+		if v != "" {
+			if _, err := uuid.Parse(v); err != nil {
+				return nil, ErrMemberInvalidGenderID
+			}
+			if _, err := s.db.GetGenderByID(ctx, v); err != nil {
+				if errors.Is(err, sql.ErrNoRows) {
+					return nil, ErrMemberInvalidGenderID
+				}
+				return nil, err
+			}
+		}
+	}
+
+	if req.PrefixID != nil {
+		v := strings.TrimSpace(*req.PrefixID)
+		if v != "" {
+			if _, err := uuid.Parse(v); err != nil {
+				return nil, ErrMemberInvalidPrefixID
+			}
+			if _, err := s.db.GetPrefixByID(ctx, v); err != nil {
+				if errors.Is(err, sql.ErrNoRows) {
+					return nil, ErrMemberInvalidPrefixID
+				}
+				return nil, err
+			}
+		}
 	}
 
 	hashedPassword, err := hashing.HashPassword(req.Password)
 	if err != nil {
-		_ = s.db.DeleteMember(ctx, member.ID.String())
 		return nil, err
 	}
 
-	memberID := member.ID.String()
-	if _, err := s.db.CreateMemberAccount(ctx, &memberID, username, string(hashedPassword)); err != nil {
-		_ = s.db.DeleteMember(ctx, member.ID.String())
+	member, err := s.db.CreateMemberWithAccount(
+		ctx,
+		req.GenderID,
+		req.PrefixID,
+		req.FirstName,
+		req.LastName,
+		req.DisplayName,
+		req.Phone,
+		username,
+		string(hashedPassword),
+	)
+	if err != nil {
 		return nil, err
 	}
 

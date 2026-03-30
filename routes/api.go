@@ -54,11 +54,11 @@ func apiMember(r *gin.RouterGroup, mod *modules.Modules) {
 	}
 	memberAccounts := r.Group("/member-accounts")
 	{
-		memberAccounts.GET("", mod.MemberAccount.Ctl.ListMemberAccountController)
-		memberAccounts.POST("", mod.MemberAccount.Ctl.CreateMemberAccountController)
-		memberAccounts.GET("/:id", mod.MemberAccount.Ctl.InfoMemberAccountController)
-		memberAccounts.PATCH("/:id", mod.MemberAccount.Ctl.UpdateMemberAccountController)
-		memberAccounts.DELETE("/:id", mod.MemberAccount.Ctl.DeleteMemberAccountController)
+		memberAccounts.GET("", requireMemberJWT(mod), forceMemberIDQueryMiddleware("member_id"), mod.MemberAccount.Ctl.ListMemberAccountController)
+		memberAccounts.POST("", requireMemberJWT(mod), forceMemberIDBodyMiddleware(), mod.MemberAccount.Ctl.CreateMemberAccountController)
+		memberAccounts.GET("/:id", requireMemberJWT(mod), ownerMemberAccountByParamMiddleware(mod), mod.MemberAccount.Ctl.InfoMemberAccountController)
+		memberAccounts.PATCH("/:id", requireMemberJWT(mod), ownerMemberAccountByParamMiddleware(mod), sanitizeMemberIDBodyMiddleware(), mod.MemberAccount.Ctl.UpdateMemberAccountController)
+		memberAccounts.DELETE("/:id", requireMemberJWT(mod), ownerMemberAccountByParamMiddleware(mod), mod.MemberAccount.Ctl.DeleteMemberAccountController)
 	}
 }
 
@@ -67,25 +67,25 @@ func apiBalance(r *gin.RouterGroup, mod *modules.Modules) {
 	{
 		wallets := Balances.Group("/wallets")
 		{
-			wallets.GET("", mod.Wallet.Ctl.ListWalletController)
-			wallets.POST("", mod.Wallet.Ctl.CreateWalletController)
-			wallets.GET("/:id", mod.Wallet.Ctl.InfoWalletController)
-			wallets.PATCH("/:id", mod.Wallet.Ctl.UpdateWalletController)
-			wallets.DELETE("/:id", mod.Wallet.Ctl.DeleteWalletController)
+			wallets.GET("", requireMemberJWT(mod), forceMemberIDQueryMiddleware("member_id"), mod.Wallet.Ctl.ListWalletController)
+			wallets.POST("", requireMemberJWT(mod), forceMemberIDBodyMiddleware(), mod.Wallet.Ctl.CreateWalletController)
+			wallets.GET("/:id", requireMemberJWT(mod), ownerWalletByParamMiddleware(mod), mod.Wallet.Ctl.InfoWalletController)
+			wallets.PATCH("/:id", requireMemberJWT(mod), ownerWalletByParamMiddleware(mod), sanitizeMemberIDBodyMiddleware(), mod.Wallet.Ctl.UpdateWalletController)
+			wallets.DELETE("/:id", requireMemberJWT(mod), ownerWalletByParamMiddleware(mod), mod.Wallet.Ctl.DeleteWalletController)
 		}
 
 		categories := Balances.Group("/categories")
 		{
-			categories.GET("", mod.Category.Ctl.ListCategoryController)
-			categories.POST("", mod.Category.Ctl.CreateCategoryController)
-			categories.GET("/:id", mod.Category.Ctl.InfoCategoryController)
-			categories.PATCH("/:id", mod.Category.Ctl.UpdateCategoryController)
-			categories.DELETE("/:id", mod.Category.Ctl.DeleteCategoryController)
+			categories.GET("", requireMemberJWT(mod), forceMemberIDQueryMiddleware("member_id"), mod.Category.Ctl.ListCategoryController)
+			categories.POST("", requireMemberJWT(mod), forceMemberIDBodyMiddleware(), mod.Category.Ctl.CreateCategoryController)
+			categories.GET("/:id", requireMemberJWT(mod), ownerCategoryByParamMiddleware(mod), mod.Category.Ctl.InfoCategoryController)
+			categories.PATCH("/:id", requireMemberJWT(mod), ownerCategoryByParamMiddleware(mod), sanitizeMemberIDBodyMiddleware(), mod.Category.Ctl.UpdateCategoryController)
+			categories.DELETE("/:id", requireMemberJWT(mod), ownerCategoryByParamMiddleware(mod), mod.Category.Ctl.DeleteCategoryController)
 		}
 
 		transactions := Balances.Group("/transactions")
 		{
-			transactions.GET("", mod.Transaction.Ctl.ListTransactionController)
+			transactions.GET("", requireMemberJWT(mod), forceMemberIDQueryMiddleware("member_id"), mod.Transaction.Ctl.ListTransactionController)
 			transactions.POST("", requireMemberJWT(mod), ownerTransactionCreateMiddleware(mod), mod.Transaction.Ctl.CreateTransactionController)
 			transactions.GET("/:id", requireMemberJWT(mod), ownerTransactionReadMiddleware(mod), mod.Transaction.Ctl.InfoTransactionController)
 			transactions.PATCH("/:id", requireMemberJWT(mod), ownerTransactionUpdateMiddleware(mod), mod.Transaction.Ctl.UpdateTransactionController)
@@ -94,7 +94,7 @@ func apiBalance(r *gin.RouterGroup, mod *modules.Modules) {
 
 		budgets := Balances.Group("/budgets")
 		{
-			budgets.GET("", mod.Budget.Ctl.ListBudgetController)
+			budgets.GET("", requireMemberJWT(mod), forceMemberIDQueryMiddleware("member_id"), mod.Budget.Ctl.ListBudgetController)
 			budgets.POST("", requireMemberJWT(mod), ownerBudgetCreateMiddleware(mod), mod.Budget.Ctl.CreateBudgetController)
 			budgets.GET("/:id", requireMemberJWT(mod), ownerBudgetReadMiddleware(mod), mod.Budget.Ctl.InfoBudgetController)
 			budgets.PATCH("/:id", requireMemberJWT(mod), ownerBudgetUpdateMiddleware(mod), mod.Budget.Ctl.UpdateBudgetController)

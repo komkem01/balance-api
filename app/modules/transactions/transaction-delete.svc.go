@@ -14,5 +14,5 @@ func (s *Service) DeleteTransaction(ctx context.Context, req *DeleteRequestServi
 	if _, err := uuid.Parse(req.ID); err != nil {
 		return ErrTransactionInvalidID
 	}
-	return s.db.DeleteTransaction(ctx, req.ID)
+	return s.db.DeleteTransactionWithWalletAdjust(ctx, req.ID)
 }

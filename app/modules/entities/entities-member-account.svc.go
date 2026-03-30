@@ -120,6 +120,19 @@ func (s *Service) DeleteMemberAccount(ctx context.Context, id string) error {
 	return err
 }
 
+func (s *Service) DeleteMemberAccountByMemberID(ctx context.Context, memberID string) error {
+	uid, err := uuid.Parse(memberID)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.db.NewDelete().
+		Model(&ent.MemberAccountEntity{}).
+		Where("member_id = ?", uid).
+		Exec(ctx)
+	return err
+}
+
 func (s *Service) ListMemberAccounts(ctx context.Context) ([]*ent.MemberAccountEntity, error) {
 	items := make([]*ent.MemberAccountEntity, 0)
 

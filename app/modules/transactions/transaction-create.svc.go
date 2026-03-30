@@ -91,7 +91,7 @@ func (s *Service) CreateTransaction(ctx context.Context, req *CreateRequestServi
 		return nil, ErrTransactionDateInvalid
 	}
 
-	item, err := s.db.CreateTransaction(
+	item, err := s.db.CreateTransactionWithWalletAdjust(
 		ctx,
 		req.WalletID,
 		req.CategoryID,

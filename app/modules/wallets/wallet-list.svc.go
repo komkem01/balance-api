@@ -3,15 +3,17 @@ package wallets
 import (
 	"balance/app/utils/base"
 	"context"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 type ListRequestService struct {
-	IsActive *bool `json:"is_active"`
-	Page     int   `json:"page"`
-	Size     int   `json:"size"`
+	MemberID *string `json:"member_id"`
+	IsActive *bool   `json:"is_active"`
+	Page     int     `json:"page"`
+	Size     int     `json:"size"`
 }
 
 type ListItemService struct {
@@ -32,7 +34,25 @@ func (s *Service) ListWallet(ctx context.Context, req *ListRequestService) ([]*L
 		return nil, nil, err
 	}
 	res := make([]*ListItemService, 0, len(items))
+	var memberFilter *uuid.UUID
+	if req.MemberID != nil {
+		v := strings.TrimSpace(*req.MemberID)
+		if v != "" {
+			id, err := uuid.Parse(v)
+			if err != nil {
+				return nil, nil, ErrWalletInvalidMemberID
+			}
+			memberFilter = &id
+		}
+	}
+
 	for _, item := range items {
+		if memberFilter != nil {
+			if item.MemberID == nil || *item.MemberID != *memberFilter {
+				continue
+			}
+		}
+
 		res = append(res, &ListItemService{ID: item.ID, MemberID: item.MemberID, Name: item.Name, Balance: item.Balance, Currency: item.Currency, ColorCode: item.ColorCode, IsActive: item.IsActive, CreatedAt: item.CreatedAt, UpdatedAt: item.UpdatedAt})
 	}
 

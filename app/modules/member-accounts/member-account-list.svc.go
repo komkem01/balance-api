@@ -3,14 +3,16 @@ package memberaccounts
 import (
 	"balance/app/utils/base"
 	"context"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 type ListRequestService struct {
-	Page int `json:"page"`
-	Size int `json:"size"`
+	MemberID *string `json:"member_id"`
+	Page     int     `json:"page"`
+	Size     int     `json:"size"`
 }
 
 type ListItemService struct {
@@ -28,7 +30,25 @@ func (s *Service) ListMemberAccount(ctx context.Context, req *ListRequestService
 	}
 
 	res := make([]*ListItemService, 0, len(items))
+	var memberFilter *uuid.UUID
+	if req.MemberID != nil {
+		v := strings.TrimSpace(*req.MemberID)
+		if v != "" {
+			id, err := uuid.Parse(v)
+			if err != nil {
+				return nil, nil, ErrMemberAccountInvalidMemberID
+			}
+			memberFilter = &id
+		}
+	}
+
 	for _, item := range items {
+		if memberFilter != nil {
+			if item.MemberID == nil || *item.MemberID != *memberFilter {
+				continue
+			}
+		}
+
 		res = append(res, &ListItemService{
 			ID:        item.ID,
 			MemberID:  item.MemberID,
