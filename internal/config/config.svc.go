@@ -55,7 +55,7 @@ func (s *Service[T]) AppName() string {
 }
 
 func (s *Service[T]) Version() string {
-	return version
+	return resolvedVersion()
 }
 
 func (s *Service[T]) Environment() string {

@@ -22,11 +22,12 @@ import (
 type Config struct {
 	Database Database
 
-	AppName     string
-	AppKey      string
-	Environment string
-	Specs       specs.Config
-	Debug       bool
+	AppName         string
+	AppKey          string
+	Environment     string
+	EncryptedStatus string
+	Specs           specs.Config
+	Debug           bool
 
 	Port           int
 	HttpJsonNaming string
@@ -62,10 +63,11 @@ var App = Config{
 	Database: database,
 	Kafka:    kafkaConf,
 
-	AppName: "go_app",
-	Port:    8080,
-	AppKey:  "secret",
-	Debug:   false,
+	AppName:         "go_app",
+	Port:            8080,
+	AppKey:          "secret",
+	EncryptedStatus: "AES-256 SECURE",
+	Debug:           false,
 
 	HttpJsonNaming: "snake_case",
 

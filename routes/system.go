@@ -30,10 +30,14 @@ type systemManifestResponse struct {
 func systemManifestHandler(mod *modules.Modules) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		environmentLabel := normalizeEnvironmentLabel(mod.Conf.Svc.Environment())
+		encryptedStatus := strings.TrimSpace(mod.Conf.Svc.Config().EncryptedStatus)
+		if encryptedStatus == "" {
+			encryptedStatus = "AES-256 SECURE"
+		}
 
 		_ = base.Success(ctx, &systemManifestResponse{
 			Version:         mod.Conf.Svc.Version(),
-			EncryptedStatus: environmentLabel,
+			EncryptedStatus: encryptedStatus,
 			Environment:     environmentLabel,
 		}, "system-manifest")
 	}
