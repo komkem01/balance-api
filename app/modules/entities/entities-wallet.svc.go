@@ -55,7 +55,7 @@ func (s *Service) GetWalletByID(ctx context.Context, id string) (*ent.WalletEnti
 		return nil, err
 	}
 	model := &ent.WalletEntity{}
-	if err := s.db.NewSelect().Model(model).Where("wallet.id = ?", uid).Scan(ctx); err != nil {
+	if err := s.db.NewSelect().Model(model).Where("wallet.id = ?", uid).Where("wallet.deleted_at IS NULL").Scan(ctx); err != nil {
 		return nil, err
 	}
 	return model, nil
@@ -67,7 +67,7 @@ func (s *Service) UpdateWallet(ctx context.Context, id string, memberID *string,
 		return nil, err
 	}
 	model := &ent.WalletEntity{}
-	if err := s.db.NewSelect().Model(model).Where("wallet.id = ?", uid).Scan(ctx); err != nil {
+	if err := s.db.NewSelect().Model(model).Where("wallet.id = ?", uid).Where("wallet.deleted_at IS NULL").Scan(ctx); err != nil {
 		return nil, err
 	}
 
@@ -110,13 +110,19 @@ func (s *Service) DeleteWallet(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-	_, err = s.db.NewDelete().Model(&ent.WalletEntity{}).Where("id = ?", uid).Exec(ctx)
+	_, err = s.db.NewUpdate().
+		Model(&ent.WalletEntity{}).
+		Set("deleted_at = now()").
+		Set("updated_at = now()").
+		Where("id = ?", uid).
+		Where("deleted_at IS NULL").
+		Exec(ctx)
 	return err
 }
 
 func (s *Service) ListWallets(ctx context.Context, isActive *bool) ([]*ent.WalletEntity, error) {
 	items := make([]*ent.WalletEntity, 0)
-	q := s.db.NewSelect().Model(&items).Order("wallet.created_at DESC")
+	q := s.db.NewSelect().Model(&items).Where("wallet.deleted_at IS NULL").Order("wallet.created_at DESC")
 	if isActive != nil {
 		q = q.Where("wallet.is_active = ?", *isActive)
 	}

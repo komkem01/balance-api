@@ -34,6 +34,10 @@ func (c *Controller) CreateWalletController(ctx *gin.Context) {
 			_ = base.BadRequest(ctx, "wallet-member-id-invalid", gin.H{"field": "member_id", "reason": "invalid"})
 			return
 		}
+		if errors.Is(err, ErrWalletBalanceInvalid) {
+			_ = base.BadRequest(ctx, "wallet-balance-invalid", gin.H{"field": "balance", "reason": "must-be-non-negative"})
+			return
+		}
 		_ = base.InternalServerError(ctx, "wallet-create-failed", nil)
 		return
 	}

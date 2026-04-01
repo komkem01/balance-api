@@ -19,4 +19,5 @@ type WalletEntity struct {
 	IsActive  bool       `bun:"type:boolean,notnull,default:true"`
 	CreatedAt time.Time  `bun:"type:timestamptz,notnull,default:now()"`
 	UpdatedAt time.Time  `bun:"type:timestamptz,notnull,default:now()"`
+	DeletedAt *time.Time `bun:"type:timestamptz,soft_delete,nullzero"`
 }

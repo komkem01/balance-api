@@ -4,6 +4,7 @@ import (
 	"balance/app/modules/entities/ent"
 	entitiesinf "balance/app/modules/entities/inf"
 	"context"
+	"errors"
 	"strings"
 	"time"
 
@@ -12,6 +13,8 @@ import (
 )
 
 var _ entitiesinf.TransactionEntity = (*Service)(nil)
+
+var ErrWalletBalanceInsufficient = errors.New("wallet balance would be negative")
 
 func parseTransactionID(value *string) (*uuid.UUID, error) {
 	if value == nil {
@@ -40,12 +43,17 @@ func (s *Service) adjustWalletBalanceTx(ctx context.Context, tx bun.Tx, walletID
 	if err := tx.NewSelect().
 		Model(wallet).
 		Where("wallet.id = ?", walletID).
+		Where("wallet.deleted_at IS NULL").
 		For("UPDATE").
 		Scan(ctx); err != nil {
 		return err
 	}
 
-	wallet.Balance += delta
+	newBalance := wallet.Balance + delta
+	if newBalance < 0 {
+		return ErrWalletBalanceInsufficient
+	}
+	wallet.Balance = newBalance
 	_, err := tx.NewUpdate().
 		Model(wallet).
 		WherePK().
@@ -130,7 +138,7 @@ func (s *Service) GetTransactionByID(ctx context.Context, id string) (*ent.Trans
 		return nil, err
 	}
 	model := &ent.TransactionEntity{}
-	if err := s.db.NewSelect().Model(model).Where("transaction.id = ?", uid).Scan(ctx); err != nil {
+	if err := s.db.NewSelect().Model(model).Where("transaction.id = ?", uid).Where("transaction.deleted_at IS NULL").Scan(ctx); err != nil {
 		return nil, err
 	}
 	return model, nil
@@ -199,6 +207,7 @@ func (s *Service) UpdateTransactionWithWalletAdjust(ctx context.Context, id stri
 		if err := tx.NewSelect().
 			Model(model).
 			Where("transaction.id = ?", uid).
+			Where("transaction.deleted_at IS NULL").
 			For("UPDATE").
 			Scan(ctx); err != nil {
 			return err
@@ -284,7 +293,13 @@ func (s *Service) DeleteTransaction(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-	_, err = s.db.NewDelete().Model(&ent.TransactionEntity{}).Where("id = ?", uid).Exec(ctx)
+	_, err = s.db.NewUpdate().
+		Model(&ent.TransactionEntity{}).
+		Set("deleted_at = now()").
+		Set("updated_at = now()").
+		Where("id = ?", uid).
+		Where("deleted_at IS NULL").
+		Exec(ctx)
 	return err
 }
 
@@ -299,6 +314,7 @@ func (s *Service) DeleteTransactionWithWalletAdjust(ctx context.Context, id stri
 		if err := tx.NewSelect().
 			Model(model).
 			Where("transaction.id = ?", uid).
+			Where("transaction.deleted_at IS NULL").
 			For("UPDATE").
 			Scan(ctx); err != nil {
 			return err
@@ -311,9 +327,12 @@ func (s *Service) DeleteTransactionWithWalletAdjust(ctx context.Context, id stri
 			}
 		}
 
-		if _, err := tx.NewDelete().
+		if _, err := tx.NewUpdate().
 			Model(&ent.TransactionEntity{}).
+			Set("deleted_at = now()").
+			Set("updated_at = now()").
 			Where("id = ?", uid).
+			Where("deleted_at IS NULL").
 			Exec(ctx); err != nil {
 			return err
 		}
@@ -324,7 +343,7 @@ func (s *Service) DeleteTransactionWithWalletAdjust(ctx context.Context, id stri
 
 func (s *Service) ListTransactions(ctx context.Context, walletID *string, categoryID *string, transactionType *ent.TransactionType) ([]*ent.TransactionEntity, error) {
 	items := make([]*ent.TransactionEntity, 0)
-	q := s.db.NewSelect().Model(&items).Order("transaction.created_at DESC")
+	q := s.db.NewSelect().Model(&items).Where("transaction.deleted_at IS NULL").Order("transaction.created_at DESC")
 
 	if walletID != nil {
 		wid, err := parseTransactionID(walletID)

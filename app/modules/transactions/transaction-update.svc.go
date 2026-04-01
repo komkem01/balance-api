@@ -1,6 +1,7 @@
 package transactions
 
 import (
+	"balance/app/modules/entities"
 	"context"
 	"database/sql"
 	"errors"
@@ -42,6 +43,9 @@ func (s *Service) UpdateTransaction(ctx context.Context, req *UpdateRequestServi
 	}
 	if req.WalletID == nil && req.CategoryID == nil && req.Amount == nil && req.Type == nil && req.TransactionDate == nil && req.Note == nil && req.ImageURL == nil {
 		return nil, ErrTransactionNoFieldsToUpdate
+	}
+	if req.Amount != nil && *req.Amount < 0 {
+		return nil, ErrTransactionAmountInvalid
 	}
 
 	if req.WalletID != nil {
@@ -92,6 +96,9 @@ func (s *Service) UpdateTransaction(ctx context.Context, req *UpdateRequestServi
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrTransactionNotFound
+		}
+		if errors.Is(err, entities.ErrWalletBalanceInsufficient) {
+			return nil, ErrTransactionInsufficientFunds
 		}
 		return nil, err
 	}

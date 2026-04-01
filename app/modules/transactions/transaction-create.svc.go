@@ -1,6 +1,7 @@
 package transactions
 
 import (
+	"balance/app/modules/entities"
 	"context"
 	"database/sql"
 	"errors"
@@ -51,6 +52,10 @@ func parseDateString(value *string) (*time.Time, error) {
 }
 
 func (s *Service) CreateTransaction(ctx context.Context, req *CreateRequestService) (*CreateResponseService, error) {
+	if req.Amount < 0 {
+		return nil, ErrTransactionAmountInvalid
+	}
+
 	transactionType, ok := parseTransactionType(strings.TrimSpace(req.Type))
 	if !ok {
 		return nil, ErrTransactionTypeInvalid
@@ -102,6 +107,9 @@ func (s *Service) CreateTransaction(ctx context.Context, req *CreateRequestServi
 		strings.TrimSpace(req.ImageURL),
 	)
 	if err != nil {
+		if errors.Is(err, entities.ErrWalletBalanceInsufficient) {
+			return nil, ErrTransactionInsufficientFunds
+		}
 		return nil, err
 	}
 

@@ -35,6 +35,9 @@ func (s *Service) CreateWallet(ctx context.Context, req *CreateRequestService) (
 	if strings.TrimSpace(req.Name) == "" {
 		return nil, ErrWalletNameRequired
 	}
+	if req.Balance < 0 {
+		return nil, ErrWalletBalanceInvalid
+	}
 
 	if req.MemberID != nil {
 		v := strings.TrimSpace(*req.MemberID)

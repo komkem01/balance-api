@@ -60,7 +60,7 @@ func (s *Service) GetBudgetByID(ctx context.Context, id string) (*ent.BudgetEnti
 		return nil, err
 	}
 	model := &ent.BudgetEntity{}
-	if err := s.db.NewSelect().Model(model).Where("budget.id = ?", uid).Scan(ctx); err != nil {
+	if err := s.db.NewSelect().Model(model).Where("budget.id = ?", uid).Where("budget.deleted_at IS NULL").Scan(ctx); err != nil {
 		return nil, err
 	}
 	return model, nil
@@ -72,7 +72,7 @@ func (s *Service) UpdateBudget(ctx context.Context, id string, memberID *string,
 		return nil, err
 	}
 	model := &ent.BudgetEntity{}
-	if err := s.db.NewSelect().Model(model).Where("budget.id = ?", uid).Scan(ctx); err != nil {
+	if err := s.db.NewSelect().Model(model).Where("budget.id = ?", uid).Where("budget.deleted_at IS NULL").Scan(ctx); err != nil {
 		return nil, err
 	}
 
@@ -106,7 +106,7 @@ func (s *Service) UpdateBudget(ctx context.Context, id string, memberID *string,
 	_, err = s.db.NewUpdate().
 		Model(model).
 		WherePK().
-		Column("member_id", "category_id", "amount", "period", "start_date", "end_date").
+		Column("member_id", "category_id", "amount", "period", "start_date", "end_date", "updated_at").
 		Exec(ctx)
 	if err != nil {
 		return nil, err
@@ -124,6 +124,7 @@ func (s *Service) UpdateBudgetSpent(ctx context.Context, id string, spentAmount 
 		Model(&ent.BudgetEntity{}).
 		Set("spent_amount = ?", spentAmount).
 		Where("id = ?", uid).
+		Where("deleted_at IS NULL").
 		Exec(ctx)
 	return err
 }
@@ -133,13 +134,19 @@ func (s *Service) DeleteBudget(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-	_, err = s.db.NewDelete().Model(&ent.BudgetEntity{}).Where("id = ?", uid).Exec(ctx)
+	_, err = s.db.NewUpdate().
+		Model(&ent.BudgetEntity{}).
+		Set("deleted_at = now()").
+		Set("updated_at = now()").
+		Where("id = ?", uid).
+		Where("deleted_at IS NULL").
+		Exec(ctx)
 	return err
 }
 
 func (s *Service) ListBudgets(ctx context.Context, memberID *string, categoryID *string, period *ent.BudgetPeriod) ([]*ent.BudgetEntity, error) {
 	items := make([]*ent.BudgetEntity, 0)
-	q := s.db.NewSelect().Model(&items).Order("budget.created_at DESC")
+	q := s.db.NewSelect().Model(&items).Where("budget.deleted_at IS NULL").Order("budget.created_at DESC")
 
 	if memberID != nil {
 		mid, err := parseBudgetID(memberID)

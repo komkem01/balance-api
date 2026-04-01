@@ -54,7 +54,7 @@ func (s *Service) GetCategoryByID(ctx context.Context, id string) (*ent.Category
 		return nil, err
 	}
 	model := &ent.CategoryEntity{}
-	if err := s.db.NewSelect().Model(model).Where("category.id = ?", uid).Scan(ctx); err != nil {
+	if err := s.db.NewSelect().Model(model).Where("category.id = ?", uid).Where("category.deleted_at IS NULL").Scan(ctx); err != nil {
 		return nil, err
 	}
 	return model, nil
@@ -66,7 +66,7 @@ func (s *Service) UpdateCategory(ctx context.Context, id string, memberID *strin
 		return nil, err
 	}
 	model := &ent.CategoryEntity{}
-	if err := s.db.NewSelect().Model(model).Where("category.id = ?", uid).Scan(ctx); err != nil {
+	if err := s.db.NewSelect().Model(model).Where("category.id = ?", uid).Where("category.deleted_at IS NULL").Scan(ctx); err != nil {
 		return nil, err
 	}
 
@@ -93,7 +93,7 @@ func (s *Service) UpdateCategory(ctx context.Context, id string, memberID *strin
 	_, err = s.db.NewUpdate().
 		Model(model).
 		WherePK().
-		Column("member_id", "name", "type", "icon_name", "color_code").
+		Column("member_id", "name", "type", "icon_name", "color_code", "updated_at").
 		Exec(ctx)
 	if err != nil {
 		return nil, err
@@ -106,13 +106,19 @@ func (s *Service) DeleteCategory(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-	_, err = s.db.NewDelete().Model(&ent.CategoryEntity{}).Where("id = ?", uid).Exec(ctx)
+	_, err = s.db.NewUpdate().
+		Model(&ent.CategoryEntity{}).
+		Set("deleted_at = now()").
+		Set("updated_at = now()").
+		Where("id = ?", uid).
+		Where("deleted_at IS NULL").
+		Exec(ctx)
 	return err
 }
 
 func (s *Service) ListCategories(ctx context.Context, memberID *string, categoryType *ent.CategoryType) ([]*ent.CategoryEntity, error) {
 	items := make([]*ent.CategoryEntity, 0)
-	q := s.db.NewSelect().Model(&items).Order("category.created_at DESC")
+	q := s.db.NewSelect().Model(&items).Where("category.deleted_at IS NULL").Order("category.created_at DESC")
 	if memberID != nil {
 		mid, err := parseCategoryMemberID(memberID)
 		if err != nil {

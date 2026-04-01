@@ -24,6 +24,14 @@ func (c *Controller) DeleteTransactionController(ctx *gin.Context) {
 			_ = base.BadRequest(ctx, "transaction-invalid-id", gin.H{"field": "id", "reason": "invalid"})
 			return
 		}
+		if errors.Is(err, ErrTransactionNotFound) {
+			_ = base.BadRequest(ctx, "transaction-not-found", nil)
+			return
+		}
+		if errors.Is(err, ErrTransactionInsufficientFunds) {
+			_ = base.BadRequest(ctx, "transaction-insufficient-funds", gin.H{"field": "amount", "reason": "insufficient-wallet-balance"})
+			return
+		}
 		_ = base.InternalServerError(ctx, "transaction-delete-failed", nil)
 		return
 	}

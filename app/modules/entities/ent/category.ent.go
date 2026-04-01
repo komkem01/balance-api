@@ -24,4 +24,6 @@ type CategoryEntity struct {
 	IconName  string       `bun:"type:varchar"`
 	ColorCode string       `bun:"type:varchar"`
 	CreatedAt time.Time    `bun:"type:timestamptz,notnull,default:now()"`
+	UpdatedAt time.Time    `bun:"type:timestamptz,notnull,default:now()"`
+	DeletedAt *time.Time   `bun:"type:timestamptz,soft_delete,nullzero"`
 }

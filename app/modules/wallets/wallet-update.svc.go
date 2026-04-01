@@ -39,6 +39,9 @@ func (s *Service) UpdateWallet(ctx context.Context, req *UpdateRequestService) (
 	if req.MemberID == nil && req.Name == nil && req.Balance == nil && req.Currency == nil && req.ColorCode == nil && req.IsActive == nil {
 		return nil, ErrWalletNoFieldsToUpdate
 	}
+	if req.Balance != nil && *req.Balance < 0 {
+		return nil, ErrWalletBalanceInvalid
+	}
 	if req.MemberID != nil {
 		v := strings.TrimSpace(*req.MemberID)
 		if v != "" {

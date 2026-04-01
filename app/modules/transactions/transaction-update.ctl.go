@@ -53,6 +53,14 @@ func (c *Controller) UpdateTransactionController(ctx *gin.Context) {
 			_ = base.BadRequest(ctx, "transaction-type-invalid", gin.H{"field": "type", "reason": "invalid", "allowed": []string{"income", "expense"}})
 			return
 		}
+		if errors.Is(err, ErrTransactionAmountInvalid) {
+			_ = base.BadRequest(ctx, "transaction-amount-invalid", gin.H{"field": "amount", "reason": "must-be-non-negative"})
+			return
+		}
+		if errors.Is(err, ErrTransactionInsufficientFunds) {
+			_ = base.BadRequest(ctx, "transaction-insufficient-funds", gin.H{"field": "amount", "reason": "insufficient-wallet-balance"})
+			return
+		}
 		if errors.Is(err, ErrTransactionDateInvalid) {
 			_ = base.BadRequest(ctx, "transaction-date-invalid", gin.H{"field": "transaction_date", "reason": "invalid", "format": "2006-01-02"})
 			return
