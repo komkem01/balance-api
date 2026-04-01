@@ -43,6 +43,7 @@ func apiSystem(r *gin.RouterGroup, mod *modules.Modules) {
 
 func apiMember(r *gin.RouterGroup, mod *modules.Modules) {
 	r.GET("/me", requireMemberJWT(mod), mod.Member.Ctl.InfoMeMemberController)
+	r.POST("/me/change-password", requireMemberJWT(mod), mod.Member.Ctl.ChangeMePasswordController)
 
 	members := r.Group("/members")
 	{
@@ -63,6 +64,8 @@ func apiMember(r *gin.RouterGroup, mod *modules.Modules) {
 }
 
 func apiBalance(r *gin.RouterGroup, mod *modules.Modules) {
+	r.GET("/dashboard/summary", requireMemberJWT(mod), dashboardSummaryHandler(mod))
+
 	Balances := r.Group("/balances")
 	{
 		wallets := Balances.Group("/wallets")

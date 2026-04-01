@@ -13,4 +13,6 @@ var (
 	ErrMemberUsernameExists     = errors.New("username already exists")
 	ErrMemberInvalidCredentials = errors.New("invalid credentials")
 	ErrMemberUnauthorized       = errors.New("unauthorized")
+	ErrMemberAccountNotFound    = errors.New("member account not found")
+	ErrMemberPasswordMismatch   = errors.New("password mismatch")
 )
