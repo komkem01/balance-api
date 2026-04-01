@@ -1,0 +1,2 @@
+ALTER TABLE budgets
+ADD COLUMN IF NOT EXISTS spent_amount numeric(18,2) NOT NULL DEFAULT 0;

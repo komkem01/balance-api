@@ -22,14 +22,15 @@ type CreateRequestService struct {
 }
 
 type CreateResponseService struct {
-	ID         uuid.UUID        `json:"id"`
-	MemberID   *uuid.UUID       `json:"member_id"`
-	CategoryID *uuid.UUID       `json:"category_id"`
-	Amount     float64          `json:"amount"`
-	Period     ent.BudgetPeriod `json:"period"`
-	StartDate  *time.Time       `json:"start_date"`
-	EndDate    *time.Time       `json:"end_date"`
-	CreatedAt  time.Time        `json:"created_at"`
+	ID          uuid.UUID        `json:"id"`
+	MemberID    *uuid.UUID       `json:"member_id"`
+	CategoryID  *uuid.UUID       `json:"category_id"`
+	Amount      float64          `json:"amount"`
+	SpentAmount float64          `json:"spent_amount"`
+	Period      ent.BudgetPeriod `json:"period"`
+	StartDate   *time.Time       `json:"start_date"`
+	EndDate     *time.Time       `json:"end_date"`
+	CreatedAt   time.Time        `json:"created_at"`
 }
 
 func parseBudgetDateString(value *string) (*time.Time, error) {
@@ -91,11 +92,15 @@ func (s *Service) CreateBudget(ctx context.Context, req *CreateRequestService) (
 	if err != nil {
 		return nil, ErrBudgetDateInvalid
 	}
+	startDate, endDate, err = resolveBudgetDateRange(period, startDate, endDate)
+	if err != nil {
+		return nil, err
+	}
 
 	item, err := s.db.CreateBudget(ctx, req.MemberID, req.CategoryID, req.Amount, period, startDate, endDate)
 	if err != nil {
 		return nil, err
 	}
 
-	return &CreateResponseService{ID: item.ID, MemberID: item.MemberID, CategoryID: item.CategoryID, Amount: item.Amount, Period: item.Period, StartDate: item.StartDate, EndDate: item.EndDate, CreatedAt: item.CreatedAt}, nil
+	return &CreateResponseService{ID: item.ID, MemberID: item.MemberID, CategoryID: item.CategoryID, Amount: item.Amount, SpentAmount: item.SpentAmount, Period: item.Period, StartDate: item.StartDate, EndDate: item.EndDate, CreatedAt: item.CreatedAt}, nil
 }

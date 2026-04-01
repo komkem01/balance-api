@@ -114,6 +114,20 @@ func (s *Service) UpdateBudget(ctx context.Context, id string, memberID *string,
 	return model, nil
 }
 
+func (s *Service) UpdateBudgetSpent(ctx context.Context, id string, spentAmount float64) error {
+	uid, err := uuid.Parse(id)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.db.NewUpdate().
+		Model(&ent.BudgetEntity{}).
+		Set("spent_amount = ?", spentAmount).
+		Where("id = ?", uid).
+		Exec(ctx)
+	return err
+}
+
 func (s *Service) DeleteBudget(ctx context.Context, id string) error {
 	uid, err := uuid.Parse(id)
 	if err != nil {

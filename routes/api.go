@@ -104,6 +104,7 @@ func apiBalance(r *gin.RouterGroup, mod *modules.Modules) {
 		{
 			budgets.GET("", requireMemberJWT(mod), forceMemberIDQueryMiddleware("member_id"), mod.Budget.Ctl.ListBudgetController)
 			budgets.POST("", requireMemberJWT(mod), ownerBudgetCreateMiddleware(mod), mod.Budget.Ctl.CreateBudgetController)
+			budgets.POST("/recalculate-all", requireMemberJWT(mod), mod.Budget.Ctl.RecalculateAllBudgetController)
 			budgets.GET("/:id", requireMemberJWT(mod), ownerBudgetReadMiddleware(mod), mod.Budget.Ctl.InfoBudgetController)
 			budgets.PATCH("/:id", requireMemberJWT(mod), ownerBudgetUpdateMiddleware(mod), mod.Budget.Ctl.UpdateBudgetController)
 			budgets.DELETE("/:id", requireMemberJWT(mod), ownerBudgetDeleteMiddleware(mod), mod.Budget.Ctl.DeleteBudgetController)

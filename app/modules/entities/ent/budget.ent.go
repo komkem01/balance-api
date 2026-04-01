@@ -18,12 +18,13 @@ const (
 type BudgetEntity struct {
 	bun.BaseModel `bun:"table:budgets,alias:budget"`
 
-	ID         uuid.UUID    `bun:"type:uuid,default:gen_random_uuid(),pk"`
-	MemberID   *uuid.UUID   `bun:"type:uuid"`
-	CategoryID *uuid.UUID   `bun:"type:uuid"`
-	Amount     float64      `bun:"type:numeric,notnull,default:0"`
-	Period     BudgetPeriod `bun:"type:budget_period,notnull"`
-	StartDate  *time.Time   `bun:"type:date"`
-	EndDate    *time.Time   `bun:"type:date"`
-	CreatedAt  time.Time    `bun:"type:timestamptz,notnull,default:now()"`
+	ID          uuid.UUID    `bun:"type:uuid,default:gen_random_uuid(),pk"`
+	MemberID    *uuid.UUID   `bun:"type:uuid"`
+	CategoryID  *uuid.UUID   `bun:"type:uuid"`
+	Amount      float64      `bun:"type:numeric(18,2),notnull,default:0"`
+	SpentAmount float64      `bun:"type:numeric(18,2),notnull,default:0"`
+	Period      BudgetPeriod `bun:"type:budget_period,notnull"`
+	StartDate   *time.Time   `bun:"type:date"`
+	EndDate     *time.Time   `bun:"type:date"`
+	CreatedAt   time.Time    `bun:"type:timestamptz,notnull,default:now()"`
 }

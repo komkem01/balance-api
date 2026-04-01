@@ -12,6 +12,8 @@ type BudgetStore interface {
 	entitiesinf.BudgetEntity
 	entitiesinf.MemberEntity
 	entitiesinf.CategoryEntity
+	entitiesinf.WalletEntity
+	entitiesinf.TransactionEntity
 }
 
 type Module struct {

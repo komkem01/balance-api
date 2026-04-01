@@ -16,14 +16,15 @@ type InfoRequestService struct {
 }
 
 type InfoResponseService struct {
-	ID         uuid.UUID        `json:"id"`
-	MemberID   *uuid.UUID       `json:"member_id"`
-	CategoryID *uuid.UUID       `json:"category_id"`
-	Amount     float64          `json:"amount"`
-	Period     ent.BudgetPeriod `json:"period"`
-	StartDate  *time.Time       `json:"start_date"`
-	EndDate    *time.Time       `json:"end_date"`
-	CreatedAt  time.Time        `json:"created_at"`
+	ID          uuid.UUID        `json:"id"`
+	MemberID    *uuid.UUID       `json:"member_id"`
+	CategoryID  *uuid.UUID       `json:"category_id"`
+	Amount      float64          `json:"amount"`
+	SpentAmount float64          `json:"spent_amount"`
+	Period      ent.BudgetPeriod `json:"period"`
+	StartDate   *time.Time       `json:"start_date"`
+	EndDate     *time.Time       `json:"end_date"`
+	CreatedAt   time.Time        `json:"created_at"`
 }
 
 func (s *Service) InfoBudget(ctx context.Context, req *InfoRequestService) (*InfoResponseService, error) {
@@ -38,5 +39,5 @@ func (s *Service) InfoBudget(ctx context.Context, req *InfoRequestService) (*Inf
 		return nil, err
 	}
 
-	return &InfoResponseService{ID: item.ID, MemberID: item.MemberID, CategoryID: item.CategoryID, Amount: item.Amount, Period: item.Period, StartDate: item.StartDate, EndDate: item.EndDate, CreatedAt: item.CreatedAt}, nil
+	return &InfoResponseService{ID: item.ID, MemberID: item.MemberID, CategoryID: item.CategoryID, Amount: item.Amount, SpentAmount: item.SpentAmount, Period: item.Period, StartDate: item.StartDate, EndDate: item.EndDate, CreatedAt: item.CreatedAt}, nil
 }

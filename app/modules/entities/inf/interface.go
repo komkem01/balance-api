@@ -88,6 +88,7 @@ type BudgetEntity interface {
 	CreateBudget(ctx context.Context, memberID *string, categoryID *string, amount float64, period ent.BudgetPeriod, startDate *time.Time, endDate *time.Time) (*ent.BudgetEntity, error)
 	GetBudgetByID(ctx context.Context, id string) (*ent.BudgetEntity, error)
 	UpdateBudget(ctx context.Context, id string, memberID *string, categoryID *string, amount *float64, period *ent.BudgetPeriod, startDate *time.Time, endDate *time.Time) (*ent.BudgetEntity, error)
+	UpdateBudgetSpent(ctx context.Context, id string, spentAmount float64) error
 	DeleteBudget(ctx context.Context, id string) error
 	ListBudgets(ctx context.Context, memberID *string, categoryID *string, period *ent.BudgetPeriod) ([]*ent.BudgetEntity, error)
 }

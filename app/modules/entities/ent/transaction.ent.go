@@ -20,7 +20,7 @@ type TransactionEntity struct {
 	ID              uuid.UUID       `bun:"type:uuid,default:gen_random_uuid(),pk"`
 	WalletID        *uuid.UUID      `bun:"type:uuid"`
 	CategoryID      *uuid.UUID      `bun:"type:uuid"`
-	Amount          float64         `bun:"type:numeric,notnull,default:0"`
+	Amount          float64         `bun:"type:numeric(18,2),notnull,default:0"`
 	Type            TransactionType `bun:"type:transaction_type,notnull"`
 	TransactionDate *time.Time      `bun:"type:date"`
 	Note            string          `bun:"type:text"`
