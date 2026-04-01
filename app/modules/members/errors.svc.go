@@ -15,4 +15,7 @@ var (
 	ErrMemberUnauthorized       = errors.New("unauthorized")
 	ErrMemberAccountNotFound    = errors.New("member account not found")
 	ErrMemberPasswordMismatch   = errors.New("password mismatch")
+	ErrMemberInvalidCurrency    = errors.New("invalid currency")
+	ErrMemberInvalidLanguage    = errors.New("invalid language")
+	ErrMemberNoSettingsToUpdate = errors.New("no settings to update")
 )

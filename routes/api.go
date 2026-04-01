@@ -17,6 +17,7 @@ func api(r *gin.RouterGroup, mod *modules.Modules) {
 	r.GET("/example/:id", mod.Example.Ctl.Get)
 	r.GET("/example-http", mod.Example.Ctl.GetHttpReq)
 	r.POST("/example", mod.Example.Ctl.Create)
+	r.GET("/system/manifest", systemManifestHandler(mod))
 }
 
 func apiSystem(r *gin.RouterGroup, mod *modules.Modules) {
@@ -43,6 +44,10 @@ func apiSystem(r *gin.RouterGroup, mod *modules.Modules) {
 
 func apiMember(r *gin.RouterGroup, mod *modules.Modules) {
 	r.GET("/me", requireMemberJWT(mod), mod.Member.Ctl.InfoMeMemberController)
+	r.GET("/me/settings", requireMemberJWT(mod), mod.Member.Ctl.InfoMeSettingsController)
+	r.PATCH("/me/settings", requireMemberJWT(mod), mod.Member.Ctl.UpdateMeSettingsController)
+	r.PATCH("/me/settings/notifications", requireMemberJWT(mod), mod.Member.Ctl.UpdateMeNotificationSettingsController)
+	r.DELETE("/me", requireMemberJWT(mod), mod.Member.Ctl.DeleteMeMemberController)
 	r.POST("/me/change-password", requireMemberJWT(mod), mod.Member.Ctl.ChangeMePasswordController)
 
 	members := r.Group("/members")

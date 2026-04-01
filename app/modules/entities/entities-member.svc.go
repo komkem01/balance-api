@@ -43,13 +43,18 @@ func (s *Service) CreateMember(ctx context.Context, genderID *string, prefixID *
 	}
 
 	model := &ent.MemberEntity{
-		ID:          uuid.New(),
-		GenderID:    gid,
-		PrefixID:    pid,
-		FirstName:   strings.TrimSpace(firstName),
-		LastName:    strings.TrimSpace(lastName),
-		DisplayName: strings.TrimSpace(displayName),
-		Phone:       strings.TrimSpace(phone),
+		ID:                uuid.New(),
+		GenderID:          gid,
+		PrefixID:          pid,
+		FirstName:         strings.TrimSpace(firstName),
+		LastName:          strings.TrimSpace(lastName),
+		DisplayName:       strings.TrimSpace(displayName),
+		Phone:             strings.TrimSpace(phone),
+		PreferredCurrency: "THB",
+		PreferredLanguage: "EN",
+		NotifyBudget:      true,
+		NotifySecurity:    true,
+		NotifyWeekly:      false,
 	}
 
 	_, err = s.db.NewInsert().Model(model).Exec(ctx)
@@ -72,13 +77,18 @@ func (s *Service) CreateMemberWithAccount(ctx context.Context, genderID *string,
 	}
 
 	member := &ent.MemberEntity{
-		ID:          uuid.New(),
-		GenderID:    gid,
-		PrefixID:    pid,
-		FirstName:   strings.TrimSpace(firstName),
-		LastName:    strings.TrimSpace(lastName),
-		DisplayName: strings.TrimSpace(displayName),
-		Phone:       strings.TrimSpace(phone),
+		ID:                uuid.New(),
+		GenderID:          gid,
+		PrefixID:          pid,
+		FirstName:         strings.TrimSpace(firstName),
+		LastName:          strings.TrimSpace(lastName),
+		DisplayName:       strings.TrimSpace(displayName),
+		Phone:             strings.TrimSpace(phone),
+		PreferredCurrency: "THB",
+		PreferredLanguage: "EN",
+		NotifyBudget:      true,
+		NotifySecurity:    true,
+		NotifyWeekly:      false,
 	}
 
 	err = s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
@@ -174,6 +184,48 @@ func (s *Service) UpdateMember(ctx context.Context, id string, genderID *string,
 		Model(model).
 		WherePK().
 		Column("gender_id", "prefix_id", "first_name", "last_name", "display_name", "phone", "last_login", "updated_at").
+		Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return model, nil
+}
+
+func (s *Service) UpdateMemberSettings(ctx context.Context, id string, preferredCurrency *string, preferredLanguage *string, notifyBudget *bool, notifySecurity *bool, notifyWeekly *bool) (*ent.MemberEntity, error) {
+	uid, err := uuid.Parse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	model := &ent.MemberEntity{}
+	if err := s.db.NewSelect().
+		Model(model).
+		Where("member.id = ?", uid).
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	if preferredCurrency != nil {
+		model.PreferredCurrency = strings.TrimSpace(*preferredCurrency)
+	}
+	if preferredLanguage != nil {
+		model.PreferredLanguage = strings.TrimSpace(*preferredLanguage)
+	}
+	if notifyBudget != nil {
+		model.NotifyBudget = *notifyBudget
+	}
+	if notifySecurity != nil {
+		model.NotifySecurity = *notifySecurity
+	}
+	if notifyWeekly != nil {
+		model.NotifyWeekly = *notifyWeekly
+	}
+
+	_, err = s.db.NewUpdate().
+		Model(model).
+		WherePK().
+		Column("preferred_currency", "preferred_language", "notify_budget", "notify_security", "notify_weekly", "updated_at").
 		Exec(ctx)
 	if err != nil {
 		return nil, err

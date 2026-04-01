@@ -40,3 +40,22 @@ func (c *Controller) InfoMeMemberController(ctx *gin.Context) {
 
 	_ = base.Success(ctx, res, "member-me")
 }
+
+func (c *Controller) DeleteMeMemberController(ctx *gin.Context) {
+	memberID := resolveCurrentMemberID(ctx)
+	if memberID == "" {
+		_ = base.Unauthorized(ctx, "unauthorized", gin.H{"reason": "missing-member-id"})
+		return
+	}
+
+	if err := c.svc.DeleteMember(ctx, &DeleteRequestService{ID: memberID}); err != nil {
+		if errors.Is(err, ErrMemberInvalidID) {
+			_ = base.BadRequest(ctx, "member-invalid-id", gin.H{"field": "id", "reason": "invalid"})
+			return
+		}
+		_ = base.InternalServerError(ctx, "member-delete-failed", nil)
+		return
+	}
+
+	_ = base.Success(ctx, nil, "member-deleted")
+}
