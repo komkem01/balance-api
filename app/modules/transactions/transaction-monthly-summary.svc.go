@@ -12,6 +12,7 @@ type MonthlySummaryRequestService struct {
 	CategoryID *string `json:"category_id"`
 	StartDate  *string `json:"start_date"`
 	EndDate    *string `json:"end_date"`
+	Range      *string `json:"range"`
 }
 
 type MonthlySummaryItemService struct {
@@ -36,15 +37,58 @@ func parseDateOnly(value *string) (*time.Time, error) {
 	return &t, nil
 }
 
+func parseSummaryRange(value *string) (*time.Time, *time.Time, error) {
+	if value == nil {
+		return nil, nil, nil
+	}
+
+	v := strings.ToLower(strings.TrimSpace(*value))
+	if v == "" || v == "all" {
+		return nil, nil, nil
+	}
+
+	now := time.Now()
+	switch v {
+	case "1d":
+		return ptrTime(now.Add(-24 * time.Hour)), ptrTime(now), nil
+	case "1w":
+		return ptrTime(now.AddDate(0, 0, -7)), ptrTime(now), nil
+	case "1m":
+		return ptrTime(now.AddDate(0, -1, 0)), ptrTime(now), nil
+	case "1y":
+		return ptrTime(now.AddDate(-1, 0, 0)), ptrTime(now), nil
+	default:
+		return nil, nil, ErrTransactionRangeInvalid
+	}
+}
+
+func ptrTime(value time.Time) *time.Time {
+	v := value
+	return &v
+}
+
 func (s *Service) MonthlySummaryTransaction(ctx context.Context, req *MonthlySummaryRequestService) ([]*MonthlySummaryItemService, error) {
-	startDate, err := parseDateOnly(req.StartDate)
+	startDate, endDate, err := parseSummaryRange(req.Range)
+	if err != nil {
+		return nil, err
+	}
+
+	explicitStartDate, err := parseDateOnly(req.StartDate)
 	if err != nil {
 		return nil, ErrTransactionDateInvalid
 	}
-	endDate, err := parseDateOnly(req.EndDate)
+	explicitEndDate, err := parseDateOnly(req.EndDate)
 	if err != nil {
 		return nil, ErrTransactionDateInvalid
 	}
+
+	if explicitStartDate != nil {
+		startDate = explicitStartDate
+	}
+	if explicitEndDate != nil {
+		endDate = explicitEndDate
+	}
+
 	if startDate != nil && endDate != nil && startDate.After(*endDate) {
 		return nil, ErrTransactionDateInvalid
 	}

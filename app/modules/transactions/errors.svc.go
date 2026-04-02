@@ -12,4 +12,5 @@ var (
 	ErrTransactionInsufficientFunds = errors.New("insufficient wallet balance")
 	ErrTransactionNoFieldsToUpdate  = errors.New("no fields to update")
 	ErrTransactionDateInvalid       = errors.New("transaction date is invalid")
+	ErrTransactionRangeInvalid      = errors.New("transaction range is invalid")
 )

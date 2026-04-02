@@ -14,6 +14,7 @@ type MonthlySummaryRequestController struct {
 	CategoryID *string `form:"category_id"`
 	StartDate  *string `form:"start_date"`
 	EndDate    *string `form:"end_date"`
+	Range      *string `form:"range"`
 }
 
 func (c *Controller) MonthlySummaryTransactionController(ctx *gin.Context) {
@@ -29,10 +30,15 @@ func (c *Controller) MonthlySummaryTransactionController(ctx *gin.Context) {
 		CategoryID: req.CategoryID,
 		StartDate:  req.StartDate,
 		EndDate:    req.EndDate,
+		Range:      req.Range,
 	})
 	if err != nil {
 		if errors.Is(err, ErrTransactionDateInvalid) {
 			_ = base.BadRequest(ctx, "transaction-date-invalid", gin.H{"reason": "invalid", "format": "2006-01-02"})
+			return
+		}
+		if errors.Is(err, ErrTransactionRangeInvalid) {
+			_ = base.BadRequest(ctx, "transaction-range-invalid", gin.H{"field": "range", "reason": "invalid", "allowed": []string{"1d", "1w", "1m", "1y", "all"}})
 			return
 		}
 
