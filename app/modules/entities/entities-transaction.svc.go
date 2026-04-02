@@ -395,3 +395,70 @@ func (s *Service) ListTransactions(ctx context.Context, memberID *string, wallet
 	}
 	return items, nil
 }
+
+func (s *Service) ListTransactionMonthlySummary(ctx context.Context, memberID *string, walletID *string, categoryID *string, startDate *time.Time, endDate *time.Time) ([]*ent.TransactionMonthlySummaryEntity, error) {
+	items := make([]*ent.TransactionMonthlySummaryEntity, 0)
+
+	q := s.db.NewSelect().
+		TableExpr("transactions AS transaction").
+		ColumnExpr("date_trunc('month', COALESCE(transaction.transaction_date::timestamp, transaction.created_at))::date AS month").
+		ColumnExpr("COALESCE(SUM(CASE WHEN transaction.type = ? THEN transaction.amount ELSE 0 END), 0) AS income_total", ent.TransactionTypeIncome).
+		ColumnExpr("COALESCE(SUM(CASE WHEN transaction.type = ? THEN transaction.amount ELSE 0 END), 0) AS expense_total", ent.TransactionTypeExpense).
+		ColumnExpr("COUNT(*) AS transaction_count").
+		Join("JOIN wallets AS wallet ON wallet.id = transaction.wallet_id").
+		Where("transaction.deleted_at IS NULL").
+		Where("wallet.deleted_at IS NULL").
+		GroupExpr("1").
+		OrderExpr("1 ASC")
+
+	if memberID != nil {
+		mid, err := parseTransactionID(memberID)
+		if err != nil {
+			return nil, err
+		}
+		if mid == nil {
+			q = q.Where("1 = 0")
+		} else {
+			q = q.Where("wallet.member_id = ?", *mid)
+		}
+	}
+
+	if walletID != nil {
+		wid, err := parseTransactionID(walletID)
+		if err != nil {
+			return nil, err
+		}
+		if wid == nil {
+			q = q.Where("transaction.wallet_id IS NULL")
+		} else {
+			q = q.Where("transaction.wallet_id = ?", *wid)
+		}
+	}
+
+	if categoryID != nil {
+		cid, err := parseTransactionID(categoryID)
+		if err != nil {
+			return nil, err
+		}
+		if cid == nil {
+			q = q.Where("transaction.category_id IS NULL")
+		} else {
+			q = q.Where("transaction.category_id = ?", *cid)
+		}
+	}
+
+	if startDate != nil {
+		q = q.Where("COALESCE(transaction.transaction_date::timestamp, transaction.created_at) >= ?", *startDate)
+	}
+
+	if endDate != nil {
+		nextDay := endDate.AddDate(0, 0, 1)
+		q = q.Where("COALESCE(transaction.transaction_date::timestamp, transaction.created_at) < ?", nextDay)
+	}
+
+	if err := q.Scan(ctx, &items); err != nil {
+		return nil, err
+	}
+
+	return items, nil
+}

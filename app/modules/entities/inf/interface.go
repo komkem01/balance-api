@@ -82,6 +82,7 @@ type TransactionEntity interface {
 	DeleteTransaction(ctx context.Context, id string) error
 	DeleteTransactionWithWalletAdjust(ctx context.Context, id string) error
 	ListTransactions(ctx context.Context, memberID *string, walletID *string, categoryID *string, transactionType *ent.TransactionType) ([]*ent.TransactionEntity, error)
+	ListTransactionMonthlySummary(ctx context.Context, memberID *string, walletID *string, categoryID *string, startDate *time.Time, endDate *time.Time) ([]*ent.TransactionMonthlySummaryEntity, error)
 }
 
 type BudgetEntity interface {

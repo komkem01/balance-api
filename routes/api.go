@@ -94,6 +94,7 @@ func apiBalance(r *gin.RouterGroup, mod *modules.Modules) {
 		transactions := Balances.Group("/transactions")
 		{
 			transactions.GET("", requireMemberJWT(mod), forceMemberIDQueryMiddleware("member_id"), mod.Transaction.Ctl.ListTransactionController)
+			transactions.GET("/monthly-summary", requireMemberJWT(mod), forceMemberIDQueryMiddleware("member_id"), mod.Transaction.Ctl.MonthlySummaryTransactionController)
 			transactions.POST("", requireMemberJWT(mod), ownerTransactionCreateMiddleware(mod), mod.Transaction.Ctl.CreateTransactionController)
 			transactions.GET("/:id", requireMemberJWT(mod), ownerTransactionReadMiddleware(mod), mod.Transaction.Ctl.InfoTransactionController)
 			transactions.PATCH("/:id", requireMemberJWT(mod), ownerTransactionUpdateMiddleware(mod), mod.Transaction.Ctl.UpdateTransactionController)
