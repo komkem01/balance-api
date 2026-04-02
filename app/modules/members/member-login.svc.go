@@ -10,7 +10,7 @@ import (
 	"balance/app/utils/hashing"
 )
 
-const memberTokenTTL = 10 * time.Minute
+const memberTokenTTL = 5 * time.Minute
 const memberRefreshTokenTTL = 7 * 24 * time.Hour
 
 type LoginRequestService struct {
