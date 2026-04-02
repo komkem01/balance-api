@@ -108,7 +108,7 @@ func (s *Service) ListBudget(ctx context.Context, req *ListRequestService) (*Lis
 				if cat != "" {
 					categoryID = &cat
 				}
-				txItems, err := s.db.ListTransactions(ctx, &walletIDStr, categoryID, &expenseType)
+				txItems, err := s.db.ListTransactions(ctx, nil, &walletIDStr, categoryID, &expenseType)
 				if err != nil {
 					return nil, nil, err
 				}

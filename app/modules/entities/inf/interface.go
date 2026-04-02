@@ -81,7 +81,7 @@ type TransactionEntity interface {
 	UpdateTransactionWithWalletAdjust(ctx context.Context, id string, walletID *string, categoryID *string, amount *float64, transactionType *ent.TransactionType, transactionDate *time.Time, note *string, imageURL *string) (*ent.TransactionEntity, error)
 	DeleteTransaction(ctx context.Context, id string) error
 	DeleteTransactionWithWalletAdjust(ctx context.Context, id string) error
-	ListTransactions(ctx context.Context, walletID *string, categoryID *string, transactionType *ent.TransactionType) ([]*ent.TransactionEntity, error)
+	ListTransactions(ctx context.Context, memberID *string, walletID *string, categoryID *string, transactionType *ent.TransactionType) ([]*ent.TransactionEntity, error)
 }
 
 type BudgetEntity interface {

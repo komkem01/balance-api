@@ -9,6 +9,7 @@ import (
 )
 
 type ListRequestController struct {
+	MemberID   *string `form:"member_id"`
 	WalletID   *string `form:"wallet_id"`
 	CategoryID *string `form:"category_id"`
 	Type       *string `form:"type"`
@@ -22,7 +23,7 @@ func (c *Controller) ListTransactionController(ctx *gin.Context) {
 		_ = base.BadRequest(ctx, "invalid-request", nil)
 		return
 	}
-	res, paginate, err := c.svc.ListTransaction(ctx, &ListRequestService{WalletID: req.WalletID, CategoryID: req.CategoryID, Type: req.Type, Page: req.Page, Size: req.Size})
+	res, paginate, err := c.svc.ListTransaction(ctx, &ListRequestService{MemberID: req.MemberID, WalletID: req.WalletID, CategoryID: req.CategoryID, Type: req.Type, Page: req.Page, Size: req.Size})
 	if err != nil {
 		if errors.Is(err, ErrTransactionTypeInvalid) {
 			_ = base.BadRequest(ctx, "transaction-type-invalid", gin.H{"field": "type", "reason": "invalid", "allowed": []string{"income", "expense"}})

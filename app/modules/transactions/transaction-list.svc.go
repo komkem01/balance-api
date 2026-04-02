@@ -12,6 +12,7 @@ import (
 )
 
 type ListRequestService struct {
+	MemberID   *string `json:"member_id"`
 	WalletID   *string `json:"wallet_id"`
 	CategoryID *string `json:"category_id"`
 	Type       *string `json:"type"`
@@ -45,7 +46,7 @@ func (s *Service) ListTransaction(ctx context.Context, req *ListRequestService) 
 		}
 	}
 
-	items, err := s.db.ListTransactions(ctx, req.WalletID, req.CategoryID, transactionType)
+	items, err := s.db.ListTransactions(ctx, req.MemberID, req.WalletID, req.CategoryID, transactionType)
 	if err != nil {
 		return nil, nil, err
 	}

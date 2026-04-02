@@ -76,7 +76,7 @@ func (s *Service) RecalculateAllBudgets(ctx context.Context) (*RecalculateAllRes
 				if category != "" {
 					categoryID = &category
 				}
-				txItems, err := s.db.ListTransactions(ctx, &walletID, categoryID, &expenseType)
+				txItems, err := s.db.ListTransactions(ctx, nil, &walletID, categoryID, &expenseType)
 				if err != nil {
 					return nil, err
 				}

@@ -106,7 +106,7 @@ func dashboardSummaryHandler(mod *modules.Modules) gin.HandlerFunc {
 		totalExpense := 0.0
 		for _, wallet := range memberWallets {
 			walletID := wallet.ID.String()
-			items, txErr := mod.ENT.Svc.ListTransactions(ctx, &walletID, nil, nil)
+			items, txErr := mod.ENT.Svc.ListTransactions(ctx, nil, &walletID, nil, nil)
 			if txErr != nil {
 				_ = base.InternalServerError(ctx, "dashboard-transactions-list-failed", nil)
 				return

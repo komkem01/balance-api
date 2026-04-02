@@ -341,9 +341,26 @@ func (s *Service) DeleteTransactionWithWalletAdjust(ctx context.Context, id stri
 	})
 }
 
-func (s *Service) ListTransactions(ctx context.Context, walletID *string, categoryID *string, transactionType *ent.TransactionType) ([]*ent.TransactionEntity, error) {
+func (s *Service) ListTransactions(ctx context.Context, memberID *string, walletID *string, categoryID *string, transactionType *ent.TransactionType) ([]*ent.TransactionEntity, error) {
 	items := make([]*ent.TransactionEntity, 0)
-	q := s.db.NewSelect().Model(&items).Where("transaction.deleted_at IS NULL").Order("transaction.created_at DESC")
+	q := s.db.NewSelect().
+		Model(&items).
+		Join("JOIN wallets AS wallet ON wallet.id = transaction.wallet_id").
+		Where("transaction.deleted_at IS NULL").
+		Where("wallet.deleted_at IS NULL").
+		Order("transaction.created_at DESC")
+
+	if memberID != nil {
+		mid, err := parseTransactionID(memberID)
+		if err != nil {
+			return nil, err
+		}
+		if mid == nil {
+			q = q.Where("1 = 0")
+		} else {
+			q = q.Where("wallet.member_id = ?", *mid)
+		}
+	}
 
 	if walletID != nil {
 		wid, err := parseTransactionID(walletID)
