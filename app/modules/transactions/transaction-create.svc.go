@@ -2,9 +2,11 @@ package transactions
 
 import (
 	"balance/app/modules/entities"
+	"balance/app/modules/storage"
 	"context"
 	"database/sql"
 	"errors"
+	"mime/multipart"
 	"strings"
 	"time"
 
@@ -14,13 +16,14 @@ import (
 )
 
 type CreateRequestService struct {
-	WalletID        *string `json:"wallet_id"`
-	CategoryID      *string `json:"category_id"`
-	Amount          float64 `json:"amount"`
-	Type            string  `json:"type"`
-	TransactionDate *string `json:"transaction_date"`
-	Note            string  `json:"note"`
-	ImageURL        string  `json:"image_url"`
+	WalletID        *string               `json:"wallet_id"`
+	CategoryID      *string               `json:"category_id"`
+	Amount          float64               `json:"amount"`
+	Type            string                `json:"type"`
+	TransactionDate *string               `json:"transaction_date"`
+	Note            string                `json:"note"`
+	ImageURL        string                `json:"image_url"`
+	Image           *multipart.FileHeader `json:"-"`
 }
 
 type CreateResponseService struct {
@@ -96,6 +99,33 @@ func (s *Service) CreateTransaction(ctx context.Context, req *CreateRequestServi
 		return nil, ErrTransactionDateInvalid
 	}
 
+	imageURL := strings.TrimSpace(req.ImageURL)
+	if req.Image != nil {
+		if s.sto == nil || !s.sto.Enabled() {
+			return nil, ErrTransactionImageUploadFailed
+		}
+
+		walletValue := "unknown-wallet"
+		if req.WalletID != nil {
+			if v := strings.TrimSpace(*req.WalletID); v != "" {
+				walletValue = v
+			}
+		}
+
+		uploadedImageURL, uploadErr := s.sto.UploadTransactionSlip(ctx, walletValue, req.Image)
+		if uploadErr != nil {
+			if errors.Is(uploadErr, storage.ErrImageTooLarge) {
+				return nil, ErrTransactionImageTooLarge
+			}
+			if errors.Is(uploadErr, storage.ErrImageInvalidType) || errors.Is(uploadErr, storage.ErrImageInvalidContent) || errors.Is(uploadErr, storage.ErrImageEmpty) || errors.Is(uploadErr, storage.ErrImageRequired) {
+				return nil, ErrTransactionImageInvalid
+			}
+			return nil, ErrTransactionImageUploadFailed
+		}
+
+		imageURL = uploadedImageURL
+	}
+
 	item, err := s.db.CreateTransactionWithWalletAdjust(
 		ctx,
 		req.WalletID,
@@ -104,7 +134,7 @@ func (s *Service) CreateTransaction(ctx context.Context, req *CreateRequestServi
 		transactionType,
 		transactionDate,
 		strings.TrimSpace(req.Note),
-		strings.TrimSpace(req.ImageURL),
+		imageURL,
 	)
 	if err != nil {
 		if errors.Is(err, entities.ErrWalletBalanceInsufficient) {
@@ -121,7 +151,7 @@ func (s *Service) CreateTransaction(ctx context.Context, req *CreateRequestServi
 		Type:            item.Type,
 		TransactionDate: item.TransactionDate,
 		Note:            item.Note,
-		ImageURL:        item.ImageURL,
+		ImageURL:        s.resolveImageURL(ctx, item.ImageURL),
 		CreatedAt:       item.CreatedAt,
 		UpdatedAt:       item.UpdatedAt,
 	}, nil

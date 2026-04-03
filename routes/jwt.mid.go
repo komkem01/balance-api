@@ -234,41 +234,63 @@ func ownerCategoryByParamMiddleware(mod *modules.Modules) gin.HandlerFunc {
 
 func ownerTransactionCreateMiddleware(mod *modules.Modules) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		memberID, _ := ctx.Get("member_id")
-		memberIDStr, _ := memberID.(string)
-
-		body, err := readAndRestoreBody(ctx)
-		if err != nil {
-			_ = base.BadRequest(ctx, "invalid-request", gin.H{"reason": "invalid-body"})
+		memberIDStr := resolveMemberIDFromContext(ctx)
+		if memberIDStr == "" {
+			_ = base.Unauthorized(ctx, "unauthorized", gin.H{"reason": "missing-member-id"})
 			ctx.Abort()
 			return
 		}
 
-		var payload struct {
-			WalletID   *string `json:"wallet_id"`
-			CategoryID *string `json:"category_id"`
-		}
-		if err := json.Unmarshal(body, &payload); err != nil {
-			_ = base.BadRequest(ctx, "invalid-request", gin.H{"reason": "invalid-body"})
-			ctx.Abort()
-			return
+		walletID := ""
+		categoryID := ""
+		contentType := strings.ToLower(strings.TrimSpace(ctx.GetHeader("Content-Type")))
+
+		if strings.HasPrefix(contentType, "multipart/form-data") {
+			walletID = strings.TrimSpace(ctx.PostForm("wallet_id"))
+			categoryID = strings.TrimSpace(ctx.PostForm("category_id"))
+		} else {
+			body, err := readAndRestoreBody(ctx)
+			if err != nil {
+				_ = base.BadRequest(ctx, "invalid-request", gin.H{"reason": "invalid-body"})
+				ctx.Abort()
+				return
+			}
+
+			var payload struct {
+				WalletID   *string `json:"wallet_id"`
+				CategoryID *string `json:"category_id"`
+			}
+			if err := json.Unmarshal(body, &payload); err != nil {
+				_ = base.BadRequest(ctx, "invalid-request", gin.H{"reason": "invalid-body"})
+				ctx.Abort()
+				return
+			}
+
+			if payload.WalletID != nil {
+				walletID = strings.TrimSpace(*payload.WalletID)
+			}
+			if payload.CategoryID != nil {
+				categoryID = strings.TrimSpace(*payload.CategoryID)
+			}
+
+			writeBody(ctx, body)
 		}
 
-		if payload.WalletID == nil || strings.TrimSpace(*payload.WalletID) == "" {
+		if walletID == "" {
 			_ = base.BadRequest(ctx, "transaction-wallet-id-invalid", gin.H{"field": "wallet_id", "reason": "required"})
 			ctx.Abort()
 			return
 		}
 
-		wallet, err := mod.ENT.Svc.GetWalletByID(ctx, strings.TrimSpace(*payload.WalletID))
+		wallet, err := mod.ENT.Svc.GetWalletByID(ctx, walletID)
 		if err != nil || wallet.MemberID == nil || wallet.MemberID.String() != memberIDStr {
 			_ = base.Unauthorized(ctx, "unauthorized", gin.H{"reason": "forbidden-wallet"})
 			ctx.Abort()
 			return
 		}
 
-		if payload.CategoryID != nil && strings.TrimSpace(*payload.CategoryID) != "" {
-			category, err := mod.ENT.Svc.GetCategoryByID(ctx, strings.TrimSpace(*payload.CategoryID))
+		if categoryID != "" {
+			category, err := mod.ENT.Svc.GetCategoryByID(ctx, categoryID)
 			if err != nil {
 				_ = base.BadRequest(ctx, "transaction-category-id-invalid", gin.H{"field": "category_id", "reason": "invalid"})
 				ctx.Abort()
@@ -281,7 +303,75 @@ func ownerTransactionCreateMiddleware(mod *modules.Modules) gin.HandlerFunc {
 			}
 		}
 
-		writeBody(ctx, body)
+		ctx.Next()
+	}
+}
+
+func ownerStorageUploadMiddleware(mod *modules.Modules) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		memberIDStr := resolveMemberIDFromContext(ctx)
+		if memberIDStr == "" {
+			_ = base.Unauthorized(ctx, "unauthorized", gin.H{"reason": "missing-member-id"})
+			ctx.Abort()
+			return
+		}
+
+		walletID := strings.TrimSpace(ctx.PostForm("wallet_id"))
+		if walletID == "" {
+			_ = base.BadRequest(ctx, "storage-wallet-id-required", gin.H{"field": "wallet_id", "reason": "required"})
+			ctx.Abort()
+			return
+		}
+
+		wallet, err := mod.ENT.Svc.GetWalletByID(ctx, walletID)
+		if err != nil || wallet.MemberID == nil || wallet.MemberID.String() != memberIDStr {
+			_ = base.Unauthorized(ctx, "unauthorized", gin.H{"reason": "forbidden-wallet"})
+			ctx.Abort()
+			return
+		}
+
+		ctx.Next()
+	}
+}
+
+func ownerStorageReadMiddleware(mod *modules.Modules) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		memberIDStr := resolveMemberIDFromContext(ctx)
+		if memberIDStr == "" {
+			_ = base.Unauthorized(ctx, "unauthorized", gin.H{"reason": "missing-member-id"})
+			ctx.Abort()
+			return
+		}
+
+		transactionID := strings.TrimSpace(ctx.Param("id"))
+		if transactionID == "" {
+			_ = base.BadRequest(ctx, "storage-transaction-id-required", gin.H{"field": "id", "reason": "required"})
+			ctx.Abort()
+			return
+		}
+
+		transaction, err := mod.ENT.Svc.GetTransactionByID(ctx, transactionID)
+		if err != nil || transaction.WalletID == nil {
+			_ = base.BadRequest(ctx, "transaction-invalid-id", gin.H{"field": "id", "reason": "invalid"})
+			ctx.Abort()
+			return
+		}
+
+		wallet, err := mod.ENT.Svc.GetWalletByID(ctx, transaction.WalletID.String())
+		if err != nil || wallet.MemberID == nil || wallet.MemberID.String() != memberIDStr {
+			_ = base.Unauthorized(ctx, "unauthorized", gin.H{"reason": "forbidden-transaction"})
+			ctx.Abort()
+			return
+		}
+
+		imageURL := strings.TrimSpace(transaction.ImageURL)
+		if imageURL == "" {
+			_ = base.BadRequest(ctx, "storage-image-url-required", gin.H{"field": "image_url", "reason": "required"})
+			ctx.Abort()
+			return
+		}
+
+		ctx.Set("storage_image_url", imageURL)
 		ctx.Next()
 	}
 }

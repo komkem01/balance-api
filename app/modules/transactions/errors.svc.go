@@ -13,4 +13,7 @@ var (
 	ErrTransactionNoFieldsToUpdate  = errors.New("no fields to update")
 	ErrTransactionDateInvalid       = errors.New("transaction date is invalid")
 	ErrTransactionRangeInvalid      = errors.New("transaction range is invalid")
+	ErrTransactionImageInvalid      = errors.New("transaction image is invalid")
+	ErrTransactionImageTooLarge     = errors.New("transaction image is too large")
+	ErrTransactionImageUploadFailed = errors.New("transaction image upload failed")
 )

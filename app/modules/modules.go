@@ -14,6 +14,7 @@ import (
 	"balance/app/modules/prefixes"
 	"balance/app/modules/sentry"
 	"balance/app/modules/specs"
+	"balance/app/modules/storage"
 	"balance/app/modules/transactions"
 	"balance/app/modules/wallets"
 	"balance/internal/config"
@@ -28,13 +29,14 @@ import (
 )
 
 type Modules struct {
-	Conf   *config.Module[appConf.Config]
-	Specs  *specs.Module
-	Log    *log.Module
-	OTEL   *collector.Module
-	Sentry *sentry.Module
-	DB     *database.DatabaseModule
-	ENT    *entities.Module
+	Conf    *config.Module[appConf.Config]
+	Specs   *specs.Module
+	Log     *log.Module
+	OTEL    *collector.Module
+	Sentry  *sentry.Module
+	DB      *database.DatabaseModule
+	ENT     *entities.Module
+	Storage *storage.Module
 	// Kafka *kafka.Module
 	Example       *example.Module
 	Example2      *exampletwo.Module
@@ -69,7 +71,8 @@ func modulesInit() {
 	memberAccountMod := memberaccounts.New(config.Conf[memberaccounts.Config](confMod.Svc), entitiesMod.Svc)
 	walletMod := wallets.New(config.Conf[wallets.Config](confMod.Svc), entitiesMod.Svc)
 	categoryMod := categories.New(config.Conf[categories.Config](confMod.Svc), entitiesMod.Svc)
-	transactionMod := transactions.New(config.Conf[transactions.Config](confMod.Svc), entitiesMod.Svc)
+	storageMod := storage.New(config.Conf[storage.Config](confMod.Svc))
+	transactionMod := transactions.New(config.Conf[transactions.Config](confMod.Svc), entitiesMod.Svc, storageMod.Svc)
 	budgetMod := budgets.New(config.Conf[budgets.Config](confMod.Svc), entitiesMod.Svc)
 	// kafka := kafka.New(&conf.Kafka)
 	mod = &Modules{
@@ -80,6 +83,7 @@ func modulesInit() {
 		Sentry:        sentryMod,
 		DB:            db,
 		ENT:           entitiesMod,
+		Storage:       storageMod,
 		Example:       exampleMod,
 		Example2:      exampleMod2,
 		Gender:        genderMod,

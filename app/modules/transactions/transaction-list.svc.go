@@ -53,7 +53,7 @@ func (s *Service) ListTransaction(ctx context.Context, req *ListRequestService) 
 
 	res := make([]*ListItemService, 0, len(items))
 	for _, item := range items {
-		res = append(res, &ListItemService{ID: item.ID, WalletID: item.WalletID, CategoryID: item.CategoryID, Amount: item.Amount, Type: item.Type, TransactionDate: item.TransactionDate, Note: item.Note, ImageURL: item.ImageURL, CreatedAt: item.CreatedAt, UpdatedAt: item.UpdatedAt})
+		res = append(res, &ListItemService{ID: item.ID, WalletID: item.WalletID, CategoryID: item.CategoryID, Amount: item.Amount, Type: item.Type, TransactionDate: item.TransactionDate, Note: item.Note, ImageURL: s.resolveImageURL(ctx, item.ImageURL), CreatedAt: item.CreatedAt, UpdatedAt: item.UpdatedAt})
 	}
 
 	page := int64(req.Page)

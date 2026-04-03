@@ -103,5 +103,5 @@ func (s *Service) UpdateTransaction(ctx context.Context, req *UpdateRequestServi
 		return nil, err
 	}
 
-	return &UpdateResponseService{ID: item.ID, WalletID: item.WalletID, CategoryID: item.CategoryID, Amount: item.Amount, Type: item.Type, TransactionDate: item.TransactionDate, Note: item.Note, ImageURL: item.ImageURL, CreatedAt: item.CreatedAt, UpdatedAt: item.UpdatedAt}, nil
+	return &UpdateResponseService{ID: item.ID, WalletID: item.WalletID, CategoryID: item.CategoryID, Amount: item.Amount, Type: item.Type, TransactionDate: item.TransactionDate, Note: item.Note, ImageURL: s.resolveImageURL(ctx, item.ImageURL), CreatedAt: item.CreatedAt, UpdatedAt: item.UpdatedAt}, nil
 }

@@ -39,5 +39,5 @@ func (s *Service) InfoTransaction(ctx context.Context, req *InfoRequestService) 
 		}
 		return nil, err
 	}
-	return &InfoResponseService{ID: item.ID, WalletID: item.WalletID, CategoryID: item.CategoryID, Amount: item.Amount, Type: item.Type, TransactionDate: item.TransactionDate, Note: item.Note, ImageURL: item.ImageURL, CreatedAt: item.CreatedAt, UpdatedAt: item.UpdatedAt}, nil
+	return &InfoResponseService{ID: item.ID, WalletID: item.WalletID, CategoryID: item.CategoryID, Amount: item.Amount, Type: item.Type, TransactionDate: item.TransactionDate, Note: item.Note, ImageURL: s.resolveImageURL(ctx, item.ImageURL), CreatedAt: item.CreatedAt, UpdatedAt: item.UpdatedAt}, nil
 }

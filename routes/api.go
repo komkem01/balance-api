@@ -110,6 +110,13 @@ func apiBalance(r *gin.RouterGroup, mod *modules.Modules) {
 			budgets.PATCH("/:id", requireMemberJWT(mod), ownerBudgetUpdateMiddleware(mod), mod.Budget.Ctl.UpdateBudgetController)
 			budgets.DELETE("/:id", requireMemberJWT(mod), ownerBudgetDeleteMiddleware(mod), mod.Budget.Ctl.DeleteBudgetController)
 		}
+
+		storages := Balances.Group("/storage")
+		{
+			storages.GET("/slips/:id", requireMemberJWT(mod), ownerStorageReadMiddleware(mod), mod.Storage.Ctl.GetTransactionSlipController)
+			storages.GET("/slips", requireMemberJWT(mod), mod.Storage.Ctl.GetTransactionSlipController)
+			storages.POST("/slips", requireMemberJWT(mod), ownerStorageUploadMiddleware(mod), mod.Storage.Ctl.UploadTransactionSlipController)
+		}
 	}
 }
 

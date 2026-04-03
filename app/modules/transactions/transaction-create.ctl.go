@@ -2,6 +2,9 @@ package transactions
 
 import (
 	"errors"
+	"mime/multipart"
+	"strconv"
+	"strings"
 
 	"balance/app/utils/base"
 
@@ -16,13 +19,51 @@ type CreateRequestController struct {
 	TransactionDate *string `json:"transaction_date"`
 	Note            string  `json:"note"`
 	ImageURL        string  `json:"image_url"`
+	Image           *multipart.FileHeader
+}
+
+func ptrIfNotBlank(value string) *string {
+	v := strings.TrimSpace(value)
+	if v == "" {
+		return nil
+	}
+	return &v
 }
 
 func (c *Controller) CreateTransactionController(ctx *gin.Context) {
 	var req CreateRequestController
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		_ = base.BadRequest(ctx, "invalid-request", gin.H{"reason": "invalid-body"})
-		return
+	if strings.HasPrefix(strings.ToLower(ctx.GetHeader("Content-Type")), "multipart/form-data") {
+		amount, err := strconv.ParseFloat(strings.TrimSpace(ctx.PostForm("amount")), 64)
+		if err != nil {
+			_ = base.BadRequest(ctx, "invalid-request", gin.H{"reason": "invalid-amount"})
+			return
+		}
+
+		typeValue := strings.TrimSpace(ctx.PostForm("type"))
+		if typeValue == "" {
+			_ = base.BadRequest(ctx, "invalid-request", gin.H{"reason": "type-required"})
+			return
+		}
+
+		req = CreateRequestController{
+			WalletID:        ptrIfNotBlank(ctx.PostForm("wallet_id")),
+			CategoryID:      ptrIfNotBlank(ctx.PostForm("category_id")),
+			Amount:          amount,
+			Type:            typeValue,
+			TransactionDate: ptrIfNotBlank(ctx.PostForm("transaction_date")),
+			Note:            strings.TrimSpace(ctx.PostForm("note")),
+			ImageURL:        strings.TrimSpace(ctx.PostForm("image_url")),
+		}
+
+		fileHeader, err := ctx.FormFile("image")
+		if err == nil {
+			req.Image = fileHeader
+		}
+	} else {
+		if err := ctx.ShouldBindJSON(&req); err != nil {
+			_ = base.BadRequest(ctx, "invalid-request", gin.H{"reason": "invalid-body"})
+			return
+		}
 	}
 
 	res, err := c.svc.CreateTransaction(ctx, &CreateRequestService{
@@ -33,6 +74,7 @@ func (c *Controller) CreateTransactionController(ctx *gin.Context) {
 		TransactionDate: req.TransactionDate,
 		Note:            req.Note,
 		ImageURL:        req.ImageURL,
+		Image:           req.Image,
 	})
 	if err != nil {
 		if errors.Is(err, ErrTransactionInvalidWalletID) {
@@ -57,6 +99,18 @@ func (c *Controller) CreateTransactionController(ctx *gin.Context) {
 		}
 		if errors.Is(err, ErrTransactionDateInvalid) {
 			_ = base.BadRequest(ctx, "transaction-date-invalid", gin.H{"field": "transaction_date", "reason": "invalid", "format": "2006-01-02"})
+			return
+		}
+		if errors.Is(err, ErrTransactionImageInvalid) {
+			_ = base.BadRequest(ctx, "transaction-image-invalid", gin.H{"field": "image", "reason": "invalid"})
+			return
+		}
+		if errors.Is(err, ErrTransactionImageTooLarge) {
+			_ = base.BadRequest(ctx, "transaction-image-too-large", gin.H{"field": "image", "reason": "max-size-2mb"})
+			return
+		}
+		if errors.Is(err, ErrTransactionImageUploadFailed) {
+			_ = base.InternalServerError(ctx, "transaction-image-upload-failed", nil)
 			return
 		}
 		_ = base.InternalServerError(ctx, "transaction-create-failed", nil)
