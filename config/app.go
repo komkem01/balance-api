@@ -11,6 +11,7 @@ import (
 	prefixes "balance/app/modules/prefixes"
 	"balance/app/modules/sentry"
 	"balance/app/modules/specs"
+	"balance/app/modules/storage"
 	"balance/app/modules/transactions"
 	wallets "balance/app/modules/wallets"
 	"balance/internal/kafka"
@@ -52,6 +53,7 @@ type Config struct {
 	MemberAccount memberaccounts.Config
 	Wallet        wallets.Config
 	Category      categories.Config
+	Storage       storage.Config
 	Transaction   transactions.Config
 	Budget        budgets.Config
 }
@@ -70,6 +72,7 @@ var App = Config{
 	Debug:           false,
 
 	HttpJsonNaming: "snake_case",
+	Storage:        storage.Config{},
 
 	SslCaPath:      "balance/cert/ca.pem",
 	SslPrivatePath: "balance/cert/server.pem",

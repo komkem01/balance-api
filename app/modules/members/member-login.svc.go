@@ -84,7 +84,7 @@ func (s *Service) LoginMember(ctx context.Context, req *LoginRequestService) (*L
 	}
 
 	now := time.Now()
-	if _, err := s.db.UpdateMember(ctx, foundMemberID, nil, nil, nil, nil, nil, nil, &now); err != nil {
+	if _, err := s.db.UpdateMember(ctx, foundMemberID, nil, nil, nil, nil, nil, nil, &now, nil); err != nil {
 		return nil, err
 	}
 

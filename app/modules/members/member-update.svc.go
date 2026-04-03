@@ -11,27 +11,29 @@ import (
 )
 
 type UpdateRequestService struct {
-	ID          string     `json:"id"`
-	GenderID    *string    `json:"gender_id"`
-	PrefixID    *string    `json:"prefix_id"`
-	FirstName   *string    `json:"first_name"`
-	LastName    *string    `json:"last_name"`
-	DisplayName *string    `json:"display_name"`
-	Phone       *string    `json:"phone"`
-	LastLogin   *time.Time `json:"last_login"`
+	ID              string     `json:"id"`
+	GenderID        *string    `json:"gender_id"`
+	PrefixID        *string    `json:"prefix_id"`
+	FirstName       *string    `json:"first_name"`
+	LastName        *string    `json:"last_name"`
+	DisplayName     *string    `json:"display_name"`
+	Phone           *string    `json:"phone"`
+	LastLogin       *time.Time `json:"last_login"`
+	ProfileImageURL *string    `json:"profile_image_url"`
 }
 
 type UpdateResponseService struct {
-	ID          uuid.UUID  `json:"id"`
-	GenderID    *uuid.UUID `json:"gender_id"`
-	PrefixID    *uuid.UUID `json:"prefix_id"`
-	FirstName   string     `json:"first_name"`
-	LastName    string     `json:"last_name"`
-	DisplayName string     `json:"display_name"`
-	Phone       string     `json:"phone"`
-	CreatedAt   time.Time  `json:"created_at"`
-	UpdatedAt   time.Time  `json:"updated_at"`
-	LastLogin   *time.Time `json:"last_login"`
+	ID              uuid.UUID  `json:"id"`
+	GenderID        *uuid.UUID `json:"gender_id"`
+	PrefixID        *uuid.UUID `json:"prefix_id"`
+	FirstName       string     `json:"first_name"`
+	LastName        string     `json:"last_name"`
+	DisplayName     string     `json:"display_name"`
+	Phone           string     `json:"phone"`
+	ProfileImageURL string     `json:"profile_image_url"`
+	CreatedAt       time.Time  `json:"created_at"`
+	UpdatedAt       time.Time  `json:"updated_at"`
+	LastLogin       *time.Time `json:"last_login"`
 }
 
 func (s *Service) UpdateMember(ctx context.Context, req *UpdateRequestService) (*UpdateResponseService, error) {
@@ -39,7 +41,7 @@ func (s *Service) UpdateMember(ctx context.Context, req *UpdateRequestService) (
 		return nil, ErrMemberInvalidID
 	}
 
-	if req.GenderID == nil && req.PrefixID == nil && req.FirstName == nil && req.LastName == nil && req.DisplayName == nil && req.Phone == nil && req.LastLogin == nil {
+	if req.GenderID == nil && req.PrefixID == nil && req.FirstName == nil && req.LastName == nil && req.DisplayName == nil && req.Phone == nil && req.LastLogin == nil && req.ProfileImageURL == nil {
 		return nil, ErrMemberNoFieldsToUpdate
 	}
 
@@ -83,6 +85,7 @@ func (s *Service) UpdateMember(ctx context.Context, req *UpdateRequestService) (
 		req.DisplayName,
 		req.Phone,
 		req.LastLogin,
+		req.ProfileImageURL,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -92,15 +95,16 @@ func (s *Service) UpdateMember(ctx context.Context, req *UpdateRequestService) (
 	}
 
 	return &UpdateResponseService{
-		ID:          member.ID,
-		GenderID:    member.GenderID,
-		PrefixID:    member.PrefixID,
-		FirstName:   member.FirstName,
-		LastName:    member.LastName,
-		DisplayName: member.DisplayName,
-		Phone:       member.Phone,
-		CreatedAt:   member.CreatedAt,
-		UpdatedAt:   member.UpdatedAt,
-		LastLogin:   member.LastLogin,
+		ID:              member.ID,
+		GenderID:        member.GenderID,
+		PrefixID:        member.PrefixID,
+		FirstName:       member.FirstName,
+		LastName:        member.LastName,
+		DisplayName:     member.DisplayName,
+		Phone:           member.Phone,
+		ProfileImageURL: s.displayProfileImageURL(ctx, member.ProfileImageURL),
+		CreatedAt:       member.CreatedAt,
+		UpdatedAt:       member.UpdatedAt,
+		LastLogin:       member.LastLogin,
 	}, nil
 }

@@ -41,7 +41,7 @@ type MemberEntity interface {
 	CreateMember(ctx context.Context, genderID *string, prefixID *string, firstName string, lastName string, displayName string, phone string) (*ent.MemberEntity, error)
 	CreateMemberWithAccount(ctx context.Context, genderID *string, prefixID *string, firstName string, lastName string, displayName string, phone string, username string, password string) (*ent.MemberEntity, error)
 	GetMemberByID(ctx context.Context, id string) (*ent.MemberEntity, error)
-	UpdateMember(ctx context.Context, id string, genderID *string, prefixID *string, firstName *string, lastName *string, displayName *string, phone *string, lastLogin *time.Time) (*ent.MemberEntity, error)
+	UpdateMember(ctx context.Context, id string, genderID *string, prefixID *string, firstName *string, lastName *string, displayName *string, phone *string, lastLogin *time.Time, profileImageURL *string) (*ent.MemberEntity, error)
 	UpdateMemberSettings(ctx context.Context, id string, preferredCurrency *string, preferredLanguage *string, notifyBudget *bool, notifySecurity *bool, notifyWeekly *bool) (*ent.MemberEntity, error)
 	DeleteMember(ctx context.Context, id string) error
 	DeleteMemberWithAccounts(ctx context.Context, id string) error

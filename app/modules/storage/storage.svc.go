@@ -21,19 +21,24 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-const transactionSlipMaxSize = int64(2 * 1024 * 1024)
+const (
+	transactionSlipMaxSize = int64(10 * 1024 * 1024)
+	profileImageMaxSize    = int64(10 * 1024 * 1024)
+)
 
 var (
 	ErrStorageNotConfigured = errors.New("storage is not configured")
 	ErrImageRequired        = errors.New("image file is required")
 	ErrImageEmpty           = errors.New("image file is empty")
-	ErrImageTooLarge        = errors.New("image file exceeds 2MB limit")
+	ErrImageTooLarge        = errors.New("image file exceeds 10MB limit")
+	ErrProfileImageTooLarge = errors.New("profile image file exceeds 10MB limit")
 	ErrImageInvalidType     = errors.New("invalid file type")
 	ErrImageInvalidContent  = errors.New("invalid file content type")
 )
 
 type Client interface {
 	UploadTransactionSlip(ctx context.Context, walletID string, fileHeader *multipart.FileHeader) (string, error)
+	UploadProfileImage(ctx context.Context, memberID string, fileHeader *multipart.FileHeader) (string, error)
 	DisplayImageURL(ctx context.Context, rawURL string) string
 	Enabled() bool
 }
@@ -68,6 +73,14 @@ func (s *Service) UploadTransactionSlip(ctx context.Context, walletID string, fi
 	}
 
 	return s.cli.UploadTransactionSlip(ctx, walletID, fileHeader)
+}
+
+func (s *Service) UploadProfileImage(ctx context.Context, memberID string, fileHeader *multipart.FileHeader) (string, error) {
+	if s == nil || s.cli == nil {
+		return "", ErrStorageNotConfigured
+	}
+
+	return s.cli.UploadProfileImage(ctx, memberID, fileHeader)
 }
 
 func (s *Service) DisplayImageURL(ctx context.Context, rawURL string) string {
@@ -195,6 +208,72 @@ func (s *storageClient) UploadTransactionSlip(ctx context.Context, walletID stri
 	objectKey := fmt.Sprintf(
 		"transaction-slips/%s/%d-%s%s",
 		walletPath,
+		time.Now().Unix(),
+		uuid.NewString(),
+		objectExt,
+	)
+
+	_, err = s.client.PutObject(
+		ctx,
+		s.bucket,
+		objectKey,
+		bytes.NewReader(data),
+		int64(len(data)),
+		minio.PutObjectOptions{ContentType: contentType},
+	)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%s/%s/%s", s.baseURL, s.bucket, objectKey), nil
+}
+
+func (s *storageClient) UploadProfileImage(ctx context.Context, memberID string, fileHeader *multipart.FileHeader) (string, error) {
+	if s == nil || !s.enabled {
+		return "", ErrStorageNotConfigured
+	}
+	if fileHeader == nil {
+		return "", ErrImageRequired
+	}
+	if fileHeader.Size <= 0 {
+		return "", ErrImageEmpty
+	}
+	if fileHeader.Size > profileImageMaxSize {
+		return "", ErrProfileImageTooLarge
+	}
+
+	ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
+	if ext != ".jpg" && ext != ".jpeg" && ext != ".png" && ext != ".webp" {
+		return "", ErrImageInvalidType
+	}
+
+	file, err := fileHeader.Open()
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	data, err := io.ReadAll(io.LimitReader(file, profileImageMaxSize+1))
+	if err != nil {
+		return "", err
+	}
+	if int64(len(data)) > profileImageMaxSize {
+		return "", ErrProfileImageTooLarge
+	}
+
+	contentType := http.DetectContentType(data)
+	if contentType != "image/jpeg" && contentType != "image/png" && contentType != "image/webp" {
+		return "", ErrImageInvalidContent
+	}
+
+	objectExt := path.Ext(strings.ToLower(fileHeader.Filename))
+	memberPath := strings.TrimSpace(memberID)
+	if memberPath == "" {
+		memberPath = "unknown-member"
+	}
+	objectKey := fmt.Sprintf(
+		"profile-images/%s/%d-%s%s",
+		memberPath,
 		time.Now().Unix(),
 		uuid.NewString(),
 		objectExt,

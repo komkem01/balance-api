@@ -134,7 +134,7 @@ func (s *Service) GetMemberByID(ctx context.Context, id string) (*ent.MemberEnti
 	return model, nil
 }
 
-func (s *Service) UpdateMember(ctx context.Context, id string, genderID *string, prefixID *string, firstName *string, lastName *string, displayName *string, phone *string, lastLogin *time.Time) (*ent.MemberEntity, error) {
+func (s *Service) UpdateMember(ctx context.Context, id string, genderID *string, prefixID *string, firstName *string, lastName *string, displayName *string, phone *string, lastLogin *time.Time, profileImageURL *string) (*ent.MemberEntity, error) {
 	uid, err := uuid.Parse(id)
 	if err != nil {
 		return nil, err
@@ -179,11 +179,14 @@ func (s *Service) UpdateMember(ctx context.Context, id string, genderID *string,
 	if lastLogin != nil {
 		model.LastLogin = lastLogin
 	}
+	if profileImageURL != nil {
+		model.ProfileImageURL = strings.TrimSpace(*profileImageURL)
+	}
 
 	_, err = s.db.NewUpdate().
 		Model(model).
 		WherePK().
-		Column("gender_id", "prefix_id", "first_name", "last_name", "display_name", "phone", "last_login", "updated_at").
+		Column("gender_id", "prefix_id", "first_name", "last_name", "display_name", "phone", "last_login", "profile_image_url", "updated_at").
 		Exec(ctx)
 	if err != nil {
 		return nil, err

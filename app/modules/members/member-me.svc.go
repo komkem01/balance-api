@@ -14,17 +14,18 @@ type MeRequestService struct {
 }
 
 type MeResponseService struct {
-	ID          uuid.UUID  `json:"id"`
-	GenderID    *uuid.UUID `json:"gender_id"`
-	PrefixID    *uuid.UUID `json:"prefix_id"`
-	FirstName   string     `json:"first_name"`
-	LastName    string     `json:"last_name"`
-	DisplayName string     `json:"display_name"`
-	Phone       string     `json:"phone"`
-	Account     *MeAccount `json:"account"`
-	CreatedAt   time.Time  `json:"created_at"`
-	UpdatedAt   time.Time  `json:"updated_at"`
-	LastLogin   *time.Time `json:"last_login"`
+	ID              uuid.UUID  `json:"id"`
+	GenderID        *uuid.UUID `json:"gender_id"`
+	PrefixID        *uuid.UUID `json:"prefix_id"`
+	FirstName       string     `json:"first_name"`
+	LastName        string     `json:"last_name"`
+	DisplayName     string     `json:"display_name"`
+	Phone           string     `json:"phone"`
+	ProfileImageURL string     `json:"profile_image_url"`
+	Account         *MeAccount `json:"account"`
+	CreatedAt       time.Time  `json:"created_at"`
+	UpdatedAt       time.Time  `json:"updated_at"`
+	LastLogin       *time.Time `json:"last_login"`
 }
 
 type MeAccount struct {
@@ -60,16 +61,17 @@ func (s *Service) InfoMeMember(ctx context.Context, req *MeRequestService) (*MeR
 	}
 
 	return &MeResponseService{
-		ID:          member.ID,
-		GenderID:    member.GenderID,
-		PrefixID:    member.PrefixID,
-		FirstName:   member.FirstName,
-		LastName:    member.LastName,
-		DisplayName: member.DisplayName,
-		Phone:       member.Phone,
-		Account:     account,
-		CreatedAt:   member.CreatedAt,
-		UpdatedAt:   member.UpdatedAt,
-		LastLogin:   member.LastLogin,
+		ID:              member.ID,
+		GenderID:        member.GenderID,
+		PrefixID:        member.PrefixID,
+		FirstName:       member.FirstName,
+		LastName:        member.LastName,
+		DisplayName:     member.DisplayName,
+		Phone:           member.Phone,
+		ProfileImageURL: s.displayProfileImageURL(ctx, member.ProfileImageURL),
+		Account:         account,
+		CreatedAt:       member.CreatedAt,
+		UpdatedAt:       member.UpdatedAt,
+		LastLogin:       member.LastLogin,
 	}, nil
 }

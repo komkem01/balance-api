@@ -14,13 +14,14 @@ type UpdateParamController struct {
 }
 
 type UpdateBodyController struct {
-	GenderID    *string    `json:"gender_id"`
-	PrefixID    *string    `json:"prefix_id"`
-	FirstName   *string    `json:"first_name"`
-	LastName    *string    `json:"last_name"`
-	DisplayName *string    `json:"display_name"`
-	Phone       *string    `json:"phone"`
-	LastLogin   *time.Time `json:"last_login"`
+	GenderID        *string    `json:"gender_id"`
+	PrefixID        *string    `json:"prefix_id"`
+	FirstName       *string    `json:"first_name"`
+	LastName        *string    `json:"last_name"`
+	DisplayName     *string    `json:"display_name"`
+	Phone           *string    `json:"phone"`
+	LastLogin       *time.Time `json:"last_login"`
+	ProfileImageURL *string    `json:"profile_image_url"`
 }
 
 func (c *Controller) UpdateMemberController(ctx *gin.Context) {
@@ -37,14 +38,15 @@ func (c *Controller) UpdateMemberController(ctx *gin.Context) {
 	}
 
 	res, err := c.svc.UpdateMember(ctx, &UpdateRequestService{
-		ID:          param.ID,
-		GenderID:    body.GenderID,
-		PrefixID:    body.PrefixID,
-		FirstName:   body.FirstName,
-		LastName:    body.LastName,
-		DisplayName: body.DisplayName,
-		Phone:       body.Phone,
-		LastLogin:   body.LastLogin,
+		ID:              param.ID,
+		GenderID:        body.GenderID,
+		PrefixID:        body.PrefixID,
+		FirstName:       body.FirstName,
+		LastName:        body.LastName,
+		DisplayName:     body.DisplayName,
+		Phone:           body.Phone,
+		LastLogin:       body.LastLogin,
+		ProfileImageURL: body.ProfileImageURL,
 	})
 	if err != nil {
 		if errors.Is(err, ErrMemberInvalidID) {

@@ -106,7 +106,7 @@ func (c *Controller) CreateTransactionController(ctx *gin.Context) {
 			return
 		}
 		if errors.Is(err, ErrTransactionImageTooLarge) {
-			_ = base.BadRequest(ctx, "transaction-image-too-large", gin.H{"field": "image", "reason": "max-size-2mb"})
+			_ = base.BadRequest(ctx, "transaction-image-too-large", gin.H{"field": "image", "reason": "max-size-10mb"})
 			return
 		}
 		if errors.Is(err, ErrTransactionImageUploadFailed) {

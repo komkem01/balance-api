@@ -49,6 +49,8 @@ func apiMember(r *gin.RouterGroup, mod *modules.Modules) {
 	r.PATCH("/me/settings/notifications", requireMemberJWT(mod), mod.Member.Ctl.UpdateMeNotificationSettingsController)
 	r.DELETE("/me", requireMemberJWT(mod), mod.Member.Ctl.DeleteMeMemberController)
 	r.POST("/me/change-password", requireMemberJWT(mod), mod.Member.Ctl.ChangeMePasswordController)
+	r.GET("/me/profile-image", requireMemberJWT(mod), mod.Member.Ctl.GetMeProfileImageController)
+	r.POST("/me/profile-image", requireMemberJWT(mod), mod.Member.Ctl.UploadMeProfileImageController)
 
 	members := r.Group("/members")
 	{

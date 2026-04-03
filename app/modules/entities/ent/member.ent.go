@@ -17,6 +17,7 @@ type MemberEntity struct {
 	LastName          string     `bun:"type:varchar"`
 	DisplayName       string     `bun:"type:varchar"`
 	Phone             string     `bun:"type:varchar"`
+	ProfileImageURL   string     `bun:"type:varchar,notnull,default:''"`
 	PreferredCurrency string     `bun:"type:varchar,notnull,default:'THB'"`
 	PreferredLanguage string     `bun:"type:varchar,notnull,default:'EN'"`
 	NotifyBudget      bool       `bun:"type:boolean,notnull,default:true"`

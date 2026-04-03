@@ -13,12 +13,13 @@ type Module struct {
 	Ctl    *Controller
 }
 
-func New(conf *config.Config[Config], db MemberStore) *Module {
+func New(conf *config.Config[Config], db MemberStore, sto StorageStore) *Module {
 	tracer := otel.Tracer("balance.modules.member")
 	svc := newService(&Options{
 		Config: conf,
 		tracer: tracer,
 		db:     db,
+		sto:    sto,
 	})
 	return &Module{
 		tracer: tracer,

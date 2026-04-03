@@ -51,7 +51,7 @@ func (c *Controller) UploadTransactionSlipController(ctx *gin.Context) {
 			return
 		}
 		if errors.Is(err, ErrImageTooLarge) {
-			_ = base.BadRequest(ctx, "storage-image-too-large", gin.H{"field": "image", "reason": "max-size-2mb"})
+			_ = base.BadRequest(ctx, "storage-image-too-large", gin.H{"field": "image", "reason": "max-size-10mb"})
 			return
 		}
 		if errors.Is(err, ErrImageInvalidType) || errors.Is(err, ErrImageInvalidContent) || errors.Is(err, ErrImageRequired) || errors.Is(err, ErrImageEmpty) {
@@ -91,4 +91,3 @@ func (c *Controller) GetTransactionSlipController(ctx *gin.Context) {
 		DisplayImageURL: c.svc.DisplayImageURL(ctx, rawImageURL),
 	}, "storage-get-success")
 }
-
