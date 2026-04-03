@@ -91,3 +91,4 @@ func (c *Controller) GetTransactionSlipController(ctx *gin.Context) {
 		DisplayImageURL: c.svc.DisplayImageURL(ctx, rawImageURL),
 	}, "storage-get-success")
 }
+
