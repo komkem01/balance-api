@@ -76,6 +76,7 @@ type CategoryEntity interface {
 type TransactionEntity interface {
 	CreateTransaction(ctx context.Context, walletID *string, categoryID *string, amount float64, transactionType ent.TransactionType, transactionDate *time.Time, note string, imageURL string) (*ent.TransactionEntity, error)
 	CreateTransactionWithWalletAdjust(ctx context.Context, walletID *string, categoryID *string, amount float64, transactionType ent.TransactionType, transactionDate *time.Time, note string, imageURL string) (*ent.TransactionEntity, error)
+	CreateTransferTransactionsWithWalletAdjust(ctx context.Context, fromWalletID string, toWalletID string, categoryID *string, amount float64, transactionDate *time.Time, fromNote string, toNote string) (*ent.TransactionEntity, *ent.TransactionEntity, error)
 	GetTransactionByID(ctx context.Context, id string) (*ent.TransactionEntity, error)
 	UpdateTransaction(ctx context.Context, id string, walletID *string, categoryID *string, amount *float64, transactionType *ent.TransactionType, transactionDate *time.Time, note *string, imageURL *string) (*ent.TransactionEntity, error)
 	UpdateTransactionWithWalletAdjust(ctx context.Context, id string, walletID *string, categoryID *string, amount *float64, transactionType *ent.TransactionType, transactionDate *time.Time, note *string, imageURL *string) (*ent.TransactionEntity, error)
@@ -92,4 +93,13 @@ type BudgetEntity interface {
 	UpdateBudgetSpent(ctx context.Context, id string, spentAmount float64) error
 	DeleteBudget(ctx context.Context, id string) error
 	ListBudgets(ctx context.Context, memberID *string, categoryID *string, period *ent.BudgetPeriod) ([]*ent.BudgetEntity, error)
+}
+
+type MemberNotificationEntity interface {
+	CreateMemberNotification(ctx context.Context, memberID string, notificationType ent.MemberNotificationType, level ent.MemberNotificationLevel, title string, description string, dedupeKey *string) (*ent.MemberNotificationEntity, error)
+	ListMemberNotifications(ctx context.Context, memberID string, includeRead bool, limit int) ([]*ent.MemberNotificationEntity, error)
+	GetLatestMemberNotificationByType(ctx context.Context, memberID string, notificationType ent.MemberNotificationType) (*ent.MemberNotificationEntity, error)
+	SetMemberNotificationRead(ctx context.Context, memberID string, notificationID string, isRead bool) (*ent.MemberNotificationEntity, error)
+	SetAllMemberNotificationsRead(ctx context.Context, memberID string, isRead bool) error
+	ClearMemberNotifications(ctx context.Context, memberID string) error
 }

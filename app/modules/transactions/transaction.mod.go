@@ -13,6 +13,9 @@ type TransactionStore interface {
 	entitiesinf.TransactionEntity
 	entitiesinf.WalletEntity
 	entitiesinf.CategoryEntity
+	entitiesinf.MemberEntity
+	entitiesinf.BudgetEntity
+	entitiesinf.MemberNotificationEntity
 }
 
 type Module struct {

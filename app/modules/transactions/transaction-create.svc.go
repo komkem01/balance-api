@@ -143,6 +143,8 @@ func (s *Service) CreateTransaction(ctx context.Context, req *CreateRequestServi
 		return nil, err
 	}
 
+	s.notifyForExpenseTransaction(ctx, item)
+
 	return &CreateResponseService{
 		ID:              item.ID,
 		WalletID:        item.WalletID,

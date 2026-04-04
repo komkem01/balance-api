@@ -47,6 +47,10 @@ func apiMember(r *gin.RouterGroup, mod *modules.Modules) {
 	r.GET("/me/settings", requireMemberJWT(mod), mod.Member.Ctl.InfoMeSettingsController)
 	r.PATCH("/me/settings", requireMemberJWT(mod), mod.Member.Ctl.UpdateMeSettingsController)
 	r.PATCH("/me/settings/notifications", requireMemberJWT(mod), mod.Member.Ctl.UpdateMeNotificationSettingsController)
+	r.GET("/me/notifications", requireMemberJWT(mod), mod.Member.Ctl.ListMeNotificationsController)
+	r.PATCH("/me/notifications/:id/read", requireMemberJWT(mod), mod.Member.Ctl.SetMeNotificationReadController)
+	r.PATCH("/me/notifications/read-all", requireMemberJWT(mod), mod.Member.Ctl.MarkAllMeNotificationsReadController)
+	r.DELETE("/me/notifications", requireMemberJWT(mod), mod.Member.Ctl.ClearMeNotificationsController)
 	r.DELETE("/me", requireMemberJWT(mod), mod.Member.Ctl.DeleteMeMemberController)
 	r.POST("/me/change-password", requireMemberJWT(mod), mod.Member.Ctl.ChangeMePasswordController)
 	r.GET("/me/profile-image", requireMemberJWT(mod), mod.Member.Ctl.GetMeProfileImageController)
@@ -97,6 +101,7 @@ func apiBalance(r *gin.RouterGroup, mod *modules.Modules) {
 		{
 			transactions.GET("", requireMemberJWT(mod), forceMemberIDQueryMiddleware("member_id"), mod.Transaction.Ctl.ListTransactionController)
 			transactions.GET("/monthly-summary", requireMemberJWT(mod), forceMemberIDQueryMiddleware("member_id"), mod.Transaction.Ctl.MonthlySummaryTransactionController)
+			transactions.POST("/transfer", requireMemberJWT(mod), ownerTransferWalletsMiddleware(mod), mod.Transaction.Ctl.TransferBetweenWalletsController)
 			transactions.POST("", requireMemberJWT(mod), ownerTransactionCreateMiddleware(mod), mod.Transaction.Ctl.CreateTransactionController)
 			transactions.GET("/:id", requireMemberJWT(mod), ownerTransactionReadMiddleware(mod), mod.Transaction.Ctl.InfoTransactionController)
 			transactions.PATCH("/:id", requireMemberJWT(mod), ownerTransactionUpdateMiddleware(mod), mod.Transaction.Ctl.UpdateTransactionController)
@@ -127,6 +132,8 @@ func apiPublic(r *gin.RouterGroup, mod *modules.Modules) {
 	{
 		auths := publics.Group("/auth")
 		{
+			auths.GET("/google", mod.Member.Ctl.GoogleOAuthStartController)
+			auths.GET("/google/callback", mod.Member.Ctl.GoogleOAuthCallbackController)
 			auths.POST("/login", mod.Member.Ctl.LoginMemberController)
 			auths.POST("/refresh", mod.Member.Ctl.RefreshMemberTokenController)
 			auths.POST("/register", mod.Member.Ctl.RegisterMemberController)

@@ -307,6 +307,91 @@ func ownerTransactionCreateMiddleware(mod *modules.Modules) gin.HandlerFunc {
 	}
 }
 
+func ownerTransferWalletsMiddleware(mod *modules.Modules) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		memberIDStr := resolveMemberIDFromContext(ctx)
+		if memberIDStr == "" {
+			_ = base.Unauthorized(ctx, "unauthorized", gin.H{"reason": "missing-member-id"})
+			ctx.Abort()
+			return
+		}
+
+		body, err := readAndRestoreBody(ctx)
+		if err != nil {
+			_ = base.BadRequest(ctx, "invalid-request", gin.H{"reason": "invalid-body"})
+			ctx.Abort()
+			return
+		}
+
+		var payload struct {
+			FromWalletID *string `json:"from_wallet_id"`
+			ToWalletID   *string `json:"to_wallet_id"`
+			CategoryID   *string `json:"category_id"`
+		}
+		if err := json.Unmarshal(body, &payload); err != nil {
+			_ = base.BadRequest(ctx, "invalid-request", gin.H{"reason": "invalid-body"})
+			ctx.Abort()
+			return
+		}
+
+		fromWalletID := ""
+		toWalletID := ""
+		categoryID := ""
+		if payload.FromWalletID != nil {
+			fromWalletID = strings.TrimSpace(*payload.FromWalletID)
+		}
+		if payload.ToWalletID != nil {
+			toWalletID = strings.TrimSpace(*payload.ToWalletID)
+		}
+		if payload.CategoryID != nil {
+			categoryID = strings.TrimSpace(*payload.CategoryID)
+		}
+
+		writeBody(ctx, body)
+
+		if fromWalletID == "" {
+			_ = base.BadRequest(ctx, "transaction-transfer-from-wallet-id-invalid", gin.H{"field": "from_wallet_id", "reason": "required"})
+			ctx.Abort()
+			return
+		}
+		if toWalletID == "" {
+			_ = base.BadRequest(ctx, "transaction-transfer-to-wallet-id-invalid", gin.H{"field": "to_wallet_id", "reason": "required"})
+			ctx.Abort()
+			return
+		}
+
+		fromWallet, err := mod.ENT.Svc.GetWalletByID(ctx, fromWalletID)
+		if err != nil || fromWallet.MemberID == nil || fromWallet.MemberID.String() != memberIDStr {
+			_ = base.Unauthorized(ctx, "unauthorized", gin.H{"reason": "forbidden-wallet"})
+			ctx.Abort()
+			return
+		}
+
+		toWallet, err := mod.ENT.Svc.GetWalletByID(ctx, toWalletID)
+		if err != nil || toWallet.MemberID == nil || toWallet.MemberID.String() != memberIDStr {
+			_ = base.Unauthorized(ctx, "unauthorized", gin.H{"reason": "forbidden-wallet"})
+			ctx.Abort()
+			return
+		}
+
+		if categoryID != "" {
+			category, err := mod.ENT.Svc.GetCategoryByID(ctx, categoryID)
+			if err != nil {
+				_ = base.BadRequest(ctx, "transaction-category-id-invalid", gin.H{"field": "category_id", "reason": "invalid"})
+				ctx.Abort()
+				return
+			}
+			if category.MemberID != nil && category.MemberID.String() != memberIDStr {
+				_ = base.Unauthorized(ctx, "unauthorized", gin.H{"reason": "forbidden-category"})
+				ctx.Abort()
+				return
+			}
+		}
+
+		ctx.Next()
+	}
+}
+
 func ownerStorageUploadMiddleware(mod *modules.Modules) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		memberIDStr := resolveMemberIDFromContext(ctx)

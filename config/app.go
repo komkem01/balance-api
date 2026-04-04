@@ -73,6 +73,11 @@ var App = Config{
 
 	HttpJsonNaming: "snake_case",
 	Storage:        storage.Config{},
+	Member: members.Config{
+		GoogleScopes:             "openid email profile",
+		GoogleFrontendSuccessUrl: "http://localhost:3000/auth/callback/google",
+		GoogleFrontendFailureUrl: "http://localhost:3000/?oauth=failed",
+	},
 
 	SslCaPath:      "balance/cert/ca.pem",
 	SslPrivatePath: "balance/cert/server.pem",

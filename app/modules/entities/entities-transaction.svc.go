@@ -132,6 +132,78 @@ func (s *Service) CreateTransactionWithWalletAdjust(ctx context.Context, walletI
 	return model, nil
 }
 
+func (s *Service) CreateTransferTransactionsWithWalletAdjust(ctx context.Context, fromWalletID string, toWalletID string, categoryID *string, amount float64, transactionDate *time.Time, fromNote string, toNote string) (*ent.TransactionEntity, *ent.TransactionEntity, error) {
+	fromWalletUUID, err := uuid.Parse(strings.TrimSpace(fromWalletID))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	toWalletUUID, err := uuid.Parse(strings.TrimSpace(toWalletID))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	categoryUUID, err := parseTransactionID(categoryID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	fromNote = strings.TrimSpace(fromNote)
+	if fromNote == "" {
+		fromNote = "Wallet transfer"
+	}
+
+	toNote = strings.TrimSpace(toNote)
+	if toNote == "" {
+		toNote = "Wallet transfer"
+	}
+
+	fromTx := &ent.TransactionEntity{
+		ID:              uuid.New(),
+		WalletID:        &fromWalletUUID,
+		CategoryID:      categoryUUID,
+		Amount:          amount,
+		Type:            ent.TransactionTypeExpense,
+		TransactionDate: transactionDate,
+		Note:            fromNote,
+		ImageURL:        "",
+	}
+
+	toTx := &ent.TransactionEntity{
+		ID:              uuid.New(),
+		WalletID:        &toWalletUUID,
+		CategoryID:      categoryUUID,
+		Amount:          amount,
+		Type:            ent.TransactionTypeIncome,
+		TransactionDate: transactionDate,
+		Note:            toNote,
+		ImageURL:        "",
+	}
+
+	err = s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		if err := s.adjustWalletBalanceTx(ctx, tx, fromWalletUUID, -amount); err != nil {
+			return err
+		}
+		if err := s.adjustWalletBalanceTx(ctx, tx, toWalletUUID, amount); err != nil {
+			return err
+		}
+
+		if _, err := tx.NewInsert().Model(fromTx).Exec(ctx); err != nil {
+			return err
+		}
+		if _, err := tx.NewInsert().Model(toTx).Exec(ctx); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return fromTx, toTx, nil
+}
+
 func (s *Service) GetTransactionByID(ctx context.Context, id string) (*ent.TransactionEntity, error) {
 	uid, err := uuid.Parse(id)
 	if err != nil {
@@ -407,6 +479,8 @@ func (s *Service) ListTransactionMonthlySummary(ctx context.Context, memberID *s
 		ColumnExpr("COUNT(*) AS transaction_count").
 		Join("JOIN wallets AS wallet ON wallet.id = transaction.wallet_id").
 		Where("transaction.deleted_at IS NULL").
+		Where("transaction.note NOT LIKE ?", "__transfer__|%").
+		Where("transaction.note <> ?", "Wallet transfer").
 		Where("wallet.deleted_at IS NULL").
 		GroupExpr("1").
 		OrderExpr("1 ASC")

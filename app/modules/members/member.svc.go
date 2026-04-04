@@ -15,6 +15,10 @@ type MemberStore interface {
 	entitiesinf.GenderEntity
 	entitiesinf.PrefixEntity
 	entitiesinf.MemberAccountEntity
+	entitiesinf.TransactionEntity
+	entitiesinf.BudgetEntity
+	entitiesinf.CategoryEntity
+	entitiesinf.MemberNotificationEntity
 }
 
 type StorageStore interface {
@@ -25,11 +29,19 @@ type StorageStore interface {
 
 type Service struct {
 	tracer trace.Tracer
+	conf   *config.Config[Config]
 	db     MemberStore
 	sto    StorageStore
 }
 
-type Config struct{}
+type Config struct {
+	GoogleClientId           string
+	GoogleClientSecret       string
+	GoogleRedirectUrl        string
+	GoogleFrontendSuccessUrl string
+	GoogleFrontendFailureUrl string
+	GoogleScopes             string
+}
 
 type Options struct {
 	*config.Config[Config]
@@ -41,6 +53,7 @@ type Options struct {
 func newService(opt *Options) *Service {
 	return &Service{
 		tracer: opt.tracer,
+		conf:   opt.Config,
 		db:     opt.db,
 		sto:    opt.sto,
 	}
