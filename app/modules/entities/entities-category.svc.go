@@ -26,7 +26,7 @@ func parseCategoryMemberID(value *string) (*uuid.UUID, error) {
 	return &id, nil
 }
 
-func (s *Service) CreateCategory(ctx context.Context, memberID *string, name string, categoryType ent.CategoryType, iconName string, colorCode string) (*ent.CategoryEntity, error) {
+func (s *Service) CreateCategory(ctx context.Context, memberID *string, name string, categoryType ent.CategoryType, categoryPurpose *ent.CategoryPurpose, iconName string, colorCode string) (*ent.CategoryEntity, error) {
 	mid, err := parseCategoryMemberID(memberID)
 	if err != nil {
 		return nil, err
@@ -37,6 +37,7 @@ func (s *Service) CreateCategory(ctx context.Context, memberID *string, name str
 		MemberID:  mid,
 		Name:      strings.TrimSpace(name),
 		Type:      categoryType,
+		Purpose:   categoryPurpose,
 		IconName:  strings.TrimSpace(iconName),
 		ColorCode: strings.TrimSpace(colorCode),
 	}
@@ -60,7 +61,7 @@ func (s *Service) GetCategoryByID(ctx context.Context, id string) (*ent.Category
 	return model, nil
 }
 
-func (s *Service) UpdateCategory(ctx context.Context, id string, memberID *string, name *string, categoryType *ent.CategoryType, iconName *string, colorCode *string) (*ent.CategoryEntity, error) {
+func (s *Service) UpdateCategory(ctx context.Context, id string, memberID *string, name *string, categoryType *ent.CategoryType, categoryPurpose *ent.CategoryPurpose, iconName *string, colorCode *string) (*ent.CategoryEntity, error) {
 	uid, err := uuid.Parse(id)
 	if err != nil {
 		return nil, err
@@ -83,6 +84,9 @@ func (s *Service) UpdateCategory(ctx context.Context, id string, memberID *strin
 	if categoryType != nil {
 		model.Type = *categoryType
 	}
+	if categoryPurpose != nil {
+		model.Purpose = categoryPurpose
+	}
 	if iconName != nil {
 		model.IconName = strings.TrimSpace(*iconName)
 	}
@@ -93,7 +97,7 @@ func (s *Service) UpdateCategory(ctx context.Context, id string, memberID *strin
 	_, err = s.db.NewUpdate().
 		Model(model).
 		WherePK().
-		Column("member_id", "name", "type", "icon_name", "color_code", "updated_at").
+		Column("member_id", "name", "type", "purpose", "icon_name", "color_code", "updated_at").
 		Exec(ctx)
 	if err != nil {
 		return nil, err
@@ -116,7 +120,7 @@ func (s *Service) DeleteCategory(ctx context.Context, id string) error {
 	return err
 }
 
-func (s *Service) ListCategories(ctx context.Context, memberID *string, categoryType *ent.CategoryType) ([]*ent.CategoryEntity, error) {
+func (s *Service) ListCategories(ctx context.Context, memberID *string, categoryType *ent.CategoryType, categoryPurpose *ent.CategoryPurpose) ([]*ent.CategoryEntity, error) {
 	items := make([]*ent.CategoryEntity, 0)
 	q := s.db.NewSelect().Model(&items).Where("category.deleted_at IS NULL").Order("category.created_at DESC")
 	if memberID != nil {
@@ -132,6 +136,9 @@ func (s *Service) ListCategories(ctx context.Context, memberID *string, category
 	}
 	if categoryType != nil {
 		q = q.Where("category.type = ?", *categoryType)
+	}
+	if categoryPurpose != nil {
+		q = q.Where("category.purpose = ?", *categoryPurpose)
 	}
 	if err := q.Scan(ctx); err != nil {
 		return nil, err

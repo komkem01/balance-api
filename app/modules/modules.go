@@ -9,6 +9,7 @@ import (
 	"balance/app/modules/entities"
 	"balance/app/modules/example"
 	"balance/app/modules/genders"
+	"balance/app/modules/loans"
 	memberaccounts "balance/app/modules/member-accounts"
 	"balance/app/modules/members"
 	"balance/app/modules/prefixes"
@@ -48,6 +49,7 @@ type Modules struct {
 	Category      *categories.Module
 	Transaction   *transactions.Module
 	Budget        *budgets.Module
+	Loan          *loans.Module
 }
 
 func modulesInit() {
@@ -74,6 +76,7 @@ func modulesInit() {
 	categoryMod := categories.New(config.Conf[categories.Config](confMod.Svc), entitiesMod.Svc)
 	transactionMod := transactions.New(config.Conf[transactions.Config](confMod.Svc), entitiesMod.Svc, storageMod.Svc)
 	budgetMod := budgets.New(config.Conf[budgets.Config](confMod.Svc), entitiesMod.Svc)
+	loanMod := loans.New(config.Conf[loans.Config](confMod.Svc), entitiesMod.Svc)
 	// kafka := kafka.New(&conf.Kafka)
 	mod = &Modules{
 		Conf:          confMod,
@@ -94,6 +97,7 @@ func modulesInit() {
 		Category:      categoryMod,
 		Transaction:   transactionMod,
 		Budget:        budgetMod,
+		Loan:          loanMod,
 	}
 
 	log.Infof("all modules initialized")

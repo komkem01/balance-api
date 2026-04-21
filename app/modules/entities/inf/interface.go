@@ -66,11 +66,11 @@ type WalletEntity interface {
 }
 
 type CategoryEntity interface {
-	CreateCategory(ctx context.Context, memberID *string, name string, categoryType ent.CategoryType, iconName string, colorCode string) (*ent.CategoryEntity, error)
+	CreateCategory(ctx context.Context, memberID *string, name string, categoryType ent.CategoryType, categoryPurpose *ent.CategoryPurpose, iconName string, colorCode string) (*ent.CategoryEntity, error)
 	GetCategoryByID(ctx context.Context, id string) (*ent.CategoryEntity, error)
-	UpdateCategory(ctx context.Context, id string, memberID *string, name *string, categoryType *ent.CategoryType, iconName *string, colorCode *string) (*ent.CategoryEntity, error)
+	UpdateCategory(ctx context.Context, id string, memberID *string, name *string, categoryType *ent.CategoryType, categoryPurpose *ent.CategoryPurpose, iconName *string, colorCode *string) (*ent.CategoryEntity, error)
 	DeleteCategory(ctx context.Context, id string) error
-	ListCategories(ctx context.Context, memberID *string, categoryType *ent.CategoryType) ([]*ent.CategoryEntity, error)
+	ListCategories(ctx context.Context, memberID *string, categoryType *ent.CategoryType, categoryPurpose *ent.CategoryPurpose) ([]*ent.CategoryEntity, error)
 }
 
 type TransactionEntity interface {
@@ -93,6 +93,14 @@ type BudgetEntity interface {
 	UpdateBudgetSpent(ctx context.Context, id string, spentAmount float64) error
 	DeleteBudget(ctx context.Context, id string) error
 	ListBudgets(ctx context.Context, memberID *string, categoryID *string, period *ent.BudgetPeriod) ([]*ent.BudgetEntity, error)
+}
+
+type LoanEntity interface {
+	CreateLoan(ctx context.Context, memberID *string, name string, lender string, totalAmount float64, remainingBalance float64, monthlyPayment float64, interestRate float64, startDate *time.Time, endDate *time.Time) (*ent.LoanEntity, error)
+	GetLoanByID(ctx context.Context, id string) (*ent.LoanEntity, error)
+	UpdateLoan(ctx context.Context, id string, name *string, lender *string, totalAmount *float64, remainingBalance *float64, monthlyPayment *float64, interestRate *float64, startDate *time.Time, endDate *time.Time) (*ent.LoanEntity, error)
+	DeleteLoan(ctx context.Context, id string) error
+	ListLoans(ctx context.Context, memberID *string) ([]*ent.LoanEntity, error)
 }
 
 type MemberNotificationEntity interface {

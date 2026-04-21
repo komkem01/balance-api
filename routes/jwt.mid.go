@@ -737,3 +737,26 @@ func ownerBudgetReadMiddleware(mod *modules.Modules) gin.HandlerFunc {
 		ctx.Next()
 	}
 }
+
+func ownerLoanByParamMiddleware(mod *modules.Modules) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		memberID, _ := ctx.Get("member_id")
+		memberIDStr, _ := memberID.(string)
+
+		loanID := strings.TrimSpace(ctx.Param("id"))
+		loan, err := mod.ENT.Svc.GetLoanByID(ctx, loanID)
+		if err != nil {
+			_ = base.BadRequest(ctx, "loan-invalid-id", gin.H{"field": "id", "reason": "invalid"})
+			ctx.Abort()
+			return
+		}
+
+		if loan.MemberID == nil || loan.MemberID.String() != memberIDStr {
+			_ = base.Unauthorized(ctx, "unauthorized", gin.H{"reason": "forbidden-loan"})
+			ctx.Abort()
+			return
+		}
+
+		ctx.Next()
+	}
+}

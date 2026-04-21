@@ -16,6 +16,7 @@ type UpdateBodyController struct {
 	MemberID  *string `json:"member_id"`
 	Name      *string `json:"name"`
 	Type      *string `json:"type"`
+	Purpose   *string `json:"purpose"`
 	IconName  *string `json:"icon_name"`
 	ColorCode *string `json:"color_code"`
 }
@@ -31,7 +32,7 @@ func (c *Controller) UpdateCategoryController(ctx *gin.Context) {
 		_ = base.BadRequest(ctx, "invalid-request", nil)
 		return
 	}
-	res, err := c.svc.UpdateCategory(ctx, &UpdateRequestService{ID: param.ID, MemberID: body.MemberID, Name: body.Name, Type: body.Type, IconName: body.IconName, ColorCode: body.ColorCode})
+	res, err := c.svc.UpdateCategory(ctx, &UpdateRequestService{ID: param.ID, MemberID: body.MemberID, Name: body.Name, Type: body.Type, Purpose: body.Purpose, IconName: body.IconName, ColorCode: body.ColorCode})
 	if err != nil {
 		if errors.Is(err, ErrCategoryInvalidID) {
 			_ = base.BadRequest(ctx, "category-invalid-id", gin.H{"field": "id", "reason": "invalid"})
@@ -47,6 +48,10 @@ func (c *Controller) UpdateCategoryController(ctx *gin.Context) {
 		}
 		if errors.Is(err, ErrCategoryTypeInvalid) {
 			_ = base.BadRequest(ctx, "category-type-invalid", gin.H{"field": "type", "reason": "invalid", "allowed": []string{"income", "expense"}})
+			return
+		}
+		if errors.Is(err, ErrCategoryPurposeInvalid) {
+			_ = base.BadRequest(ctx, "category-purpose-invalid", gin.H{"field": "purpose", "reason": "invalid", "allowed": []string{"loan_repayment"}})
 			return
 		}
 		if errors.Is(err, ErrCategoryNoFieldsToUpdate) {

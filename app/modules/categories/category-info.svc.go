@@ -16,13 +16,14 @@ type InfoRequestService struct {
 }
 
 type InfoResponseService struct {
-	ID        uuid.UUID        `json:"id"`
-	MemberID  *uuid.UUID       `json:"member_id"`
-	Name      string           `json:"name"`
-	Type      ent.CategoryType `json:"type"`
-	IconName  string           `json:"icon_name"`
-	ColorCode string           `json:"color_code"`
-	CreatedAt time.Time        `json:"created_at"`
+	ID        uuid.UUID            `json:"id"`
+	MemberID  *uuid.UUID           `json:"member_id"`
+	Name      string               `json:"name"`
+	Type      ent.CategoryType     `json:"type"`
+	Purpose   *ent.CategoryPurpose `json:"purpose"`
+	IconName  string               `json:"icon_name"`
+	ColorCode string               `json:"color_code"`
+	CreatedAt time.Time            `json:"created_at"`
 }
 
 func (s *Service) InfoCategory(ctx context.Context, req *InfoRequestService) (*InfoResponseService, error) {
@@ -36,5 +37,5 @@ func (s *Service) InfoCategory(ctx context.Context, req *InfoRequestService) (*I
 		}
 		return nil, err
 	}
-	return &InfoResponseService{ID: item.ID, MemberID: item.MemberID, Name: item.Name, Type: item.Type, IconName: item.IconName, ColorCode: item.ColorCode, CreatedAt: item.CreatedAt}, nil
+	return &InfoResponseService{ID: item.ID, MemberID: item.MemberID, Name: item.Name, Type: item.Type, Purpose: item.Purpose, IconName: item.IconName, ColorCode: item.ColorCode, CreatedAt: item.CreatedAt}, nil
 }

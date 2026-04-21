@@ -34,3 +34,12 @@ func parseCategoryType(value string) (ent.CategoryType, bool) {
 		return "", false
 	}
 }
+
+func parseCategoryPurpose(value string) (ent.CategoryPurpose, bool) {
+	switch value {
+	case string(ent.CategoryPurposeLoanRepayment):
+		return ent.CategoryPurposeLoanRepayment, true
+	default:
+		return "", false
+	}
+}

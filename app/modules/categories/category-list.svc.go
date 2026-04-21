@@ -14,18 +14,20 @@ import (
 type ListRequestService struct {
 	MemberID *string `json:"member_id"`
 	Type     *string `json:"type"`
+	Purpose  *string `json:"purpose"`
 	Page     int     `json:"page"`
 	Size     int     `json:"size"`
 }
 
 type ListItemService struct {
-	ID        uuid.UUID        `json:"id"`
-	MemberID  *uuid.UUID       `json:"member_id"`
-	Name      string           `json:"name"`
-	Type      ent.CategoryType `json:"type"`
-	IconName  string           `json:"icon_name"`
-	ColorCode string           `json:"color_code"`
-	CreatedAt time.Time        `json:"created_at"`
+	ID        uuid.UUID            `json:"id"`
+	MemberID  *uuid.UUID           `json:"member_id"`
+	Name      string               `json:"name"`
+	Type      ent.CategoryType     `json:"type"`
+	Purpose   *ent.CategoryPurpose `json:"purpose"`
+	IconName  string               `json:"icon_name"`
+	ColorCode string               `json:"color_code"`
+	CreatedAt time.Time            `json:"created_at"`
 }
 
 func (s *Service) ListCategory(ctx context.Context, req *ListRequestService) ([]*ListItemService, *base.ResponsePaginate, error) {
@@ -41,13 +43,25 @@ func (s *Service) ListCategory(ctx context.Context, req *ListRequestService) ([]
 		}
 	}
 
-	items, err := s.db.ListCategories(ctx, req.MemberID, categoryType)
+	var categoryPurpose *ent.CategoryPurpose
+	if req.Purpose != nil {
+		v := strings.TrimSpace(*req.Purpose)
+		if v != "" {
+			parsed, ok := parseCategoryPurpose(v)
+			if !ok {
+				return nil, nil, ErrCategoryPurposeInvalid
+			}
+			categoryPurpose = &parsed
+		}
+	}
+
+	items, err := s.db.ListCategories(ctx, req.MemberID, categoryType, categoryPurpose)
 	if err != nil {
 		return nil, nil, err
 	}
 	res := make([]*ListItemService, 0, len(items))
 	for _, item := range items {
-		res = append(res, &ListItemService{ID: item.ID, MemberID: item.MemberID, Name: item.Name, Type: item.Type, IconName: item.IconName, ColorCode: item.ColorCode, CreatedAt: item.CreatedAt})
+		res = append(res, &ListItemService{ID: item.ID, MemberID: item.MemberID, Name: item.Name, Type: item.Type, Purpose: item.Purpose, IconName: item.IconName, ColorCode: item.ColorCode, CreatedAt: item.CreatedAt})
 	}
 
 	page := int64(req.Page)

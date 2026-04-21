@@ -11,6 +11,7 @@ import (
 type ListRequestController struct {
 	MemberID *string `form:"member_id"`
 	Type     *string `form:"type"`
+	Purpose  *string `form:"purpose"`
 	Page     int     `form:"page"`
 	Size     int     `form:"size"`
 }
@@ -21,7 +22,7 @@ func (c *Controller) ListCategoryController(ctx *gin.Context) {
 		_ = base.BadRequest(ctx, "invalid-request", nil)
 		return
 	}
-	res, paginate, err := c.svc.ListCategory(ctx, &ListRequestService{MemberID: req.MemberID, Type: req.Type, Page: req.Page, Size: req.Size})
+	res, paginate, err := c.svc.ListCategory(ctx, &ListRequestService{MemberID: req.MemberID, Type: req.Type, Purpose: req.Purpose, Page: req.Page, Size: req.Size})
 	if err != nil {
 		if errors.Is(err, ErrCategoryTypeInvalid) {
 			_ = base.BadRequest(ctx, "category-type-invalid", gin.H{"field": "type", "reason": "invalid", "allowed": []string{"income", "expense"}})
@@ -29,6 +30,10 @@ func (c *Controller) ListCategoryController(ctx *gin.Context) {
 		}
 		if errors.Is(err, ErrCategoryInvalidMemberID) {
 			_ = base.BadRequest(ctx, "category-member-id-invalid", gin.H{"field": "member_id", "reason": "invalid"})
+			return
+		}
+		if errors.Is(err, ErrCategoryPurposeInvalid) {
+			_ = base.BadRequest(ctx, "category-purpose-invalid", gin.H{"field": "purpose", "reason": "invalid", "allowed": []string{"loan_repayment"}})
 			return
 		}
 		_ = base.InternalServerError(ctx, "category-list-failed", nil)

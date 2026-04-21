@@ -16,18 +16,20 @@ type CreateRequestService struct {
 	MemberID  *string `json:"member_id"`
 	Name      string  `json:"name"`
 	Type      string  `json:"type"`
+	Purpose   *string `json:"purpose"`
 	IconName  string  `json:"icon_name"`
 	ColorCode string  `json:"color_code"`
 }
 
 type CreateResponseService struct {
-	ID        uuid.UUID        `json:"id"`
-	MemberID  *uuid.UUID       `json:"member_id"`
-	Name      string           `json:"name"`
-	Type      ent.CategoryType `json:"type"`
-	IconName  string           `json:"icon_name"`
-	ColorCode string           `json:"color_code"`
-	CreatedAt time.Time        `json:"created_at"`
+	ID        uuid.UUID            `json:"id"`
+	MemberID  *uuid.UUID           `json:"member_id"`
+	Name      string               `json:"name"`
+	Type      ent.CategoryType     `json:"type"`
+	Purpose   *ent.CategoryPurpose `json:"purpose"`
+	IconName  string               `json:"icon_name"`
+	ColorCode string               `json:"color_code"`
+	CreatedAt time.Time            `json:"created_at"`
 }
 
 func (s *Service) CreateCategory(ctx context.Context, req *CreateRequestService) (*CreateResponseService, error) {
@@ -37,6 +39,18 @@ func (s *Service) CreateCategory(ctx context.Context, req *CreateRequestService)
 	categoryType, ok := parseCategoryType(strings.TrimSpace(req.Type))
 	if !ok {
 		return nil, ErrCategoryTypeInvalid
+	}
+
+	var categoryPurpose *ent.CategoryPurpose
+	if req.Purpose != nil {
+		purposeRaw := strings.TrimSpace(*req.Purpose)
+		if purposeRaw != "" {
+			parsedPurpose, purposeOK := parseCategoryPurpose(purposeRaw)
+			if !purposeOK {
+				return nil, ErrCategoryPurposeInvalid
+			}
+			categoryPurpose = &parsedPurpose
+		}
 	}
 
 	if req.MemberID != nil {
@@ -54,9 +68,9 @@ func (s *Service) CreateCategory(ctx context.Context, req *CreateRequestService)
 		}
 	}
 
-	item, err := s.db.CreateCategory(ctx, req.MemberID, strings.TrimSpace(req.Name), categoryType, strings.TrimSpace(req.IconName), strings.TrimSpace(req.ColorCode))
+	item, err := s.db.CreateCategory(ctx, req.MemberID, strings.TrimSpace(req.Name), categoryType, categoryPurpose, strings.TrimSpace(req.IconName), strings.TrimSpace(req.ColorCode))
 	if err != nil {
 		return nil, err
 	}
-	return &CreateResponseService{ID: item.ID, MemberID: item.MemberID, Name: item.Name, Type: item.Type, IconName: item.IconName, ColorCode: item.ColorCode, CreatedAt: item.CreatedAt}, nil
+	return &CreateResponseService{ID: item.ID, MemberID: item.MemberID, Name: item.Name, Type: item.Type, Purpose: item.Purpose, IconName: item.IconName, ColorCode: item.ColorCode, CreatedAt: item.CreatedAt}, nil
 }
