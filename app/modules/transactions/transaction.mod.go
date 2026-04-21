@@ -15,6 +15,8 @@ type TransactionStore interface {
 	entitiesinf.CategoryEntity
 	entitiesinf.MemberEntity
 	entitiesinf.BudgetEntity
+	entitiesinf.GoalEntity
+	entitiesinf.GoalEntryEntity
 	entitiesinf.MemberNotificationEntity
 }
 

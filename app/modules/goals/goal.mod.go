@@ -1,4 +1,4 @@
-package loans
+package goals
 
 import (
 	entitiesinf "balance/app/modules/entities/inf"
@@ -8,11 +8,12 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type LoanStore interface {
-	entitiesinf.LoanEntity
-	entitiesinf.MemberEntity
+type GoalStore interface {
 	entitiesinf.GoalEntity
 	entitiesinf.GoalEntryEntity
+	entitiesinf.MemberEntity
+	entitiesinf.WalletEntity
+	entitiesinf.LoanEntity
 }
 
 type Module struct {
@@ -21,8 +22,8 @@ type Module struct {
 	Ctl    *Controller
 }
 
-func New(conf *config.Config[Config], db LoanStore) *Module {
-	tracer := otel.Tracer("balance.modules.loan")
+func New(conf *config.Config[Config], db GoalStore) *Module {
+	tracer := otel.Tracer("balance.modules.goal")
 	svc := newService(&Options{Config: conf, tracer: tracer, db: db})
 	return &Module{tracer: tracer, Svc: svc, Ctl: newController(tracer, svc)}
 }

@@ -17,7 +17,15 @@ func (s *Service) DeleteTransaction(ctx context.Context, req *DeleteRequestServi
 	if _, err := uuid.Parse(req.ID); err != nil {
 		return ErrTransactionInvalidID
 	}
-	err := s.db.DeleteTransactionWithWalletAdjust(ctx, req.ID)
+
+	item, err := s.db.GetTransactionByID(ctx, req.ID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrTransactionNotFound
+		}
+		return err
+	}
+	err = s.db.DeleteTransactionWithWalletAdjust(ctx, req.ID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return ErrTransactionNotFound
@@ -25,6 +33,15 @@ func (s *Service) DeleteTransaction(ctx context.Context, req *DeleteRequestServi
 		if errors.Is(err, entities.ErrWalletBalanceInsufficient) {
 			return ErrTransactionInsufficientFunds
 		}
+		return err
 	}
-	return err
+
+	if item.WalletID != nil {
+		sourceID := item.ID.String()
+		if err := s.recalculateGoalsByWalletChanges(ctx, []string{item.WalletID.String()}, &sourceID); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

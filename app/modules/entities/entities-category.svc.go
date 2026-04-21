@@ -131,7 +131,7 @@ func (s *Service) ListCategories(ctx context.Context, memberID *string, category
 		if mid == nil {
 			q = q.Where("category.member_id IS NULL")
 		} else {
-			q = q.Where("category.member_id = ?", *mid)
+			q = q.Where("(category.member_id = ? OR category.member_id IS NULL)", *mid)
 		}
 	}
 	if categoryType != nil {

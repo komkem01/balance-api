@@ -103,6 +103,19 @@ type LoanEntity interface {
 	ListLoans(ctx context.Context, memberID *string) ([]*ent.LoanEntity, error)
 }
 
+type GoalEntity interface {
+	CreateGoal(ctx context.Context, memberID *string, name string, goalType ent.GoalType, targetAmount float64, startAmount float64, currentAmount float64, startDate *time.Time, targetDate *time.Time, status ent.GoalStatus, autoTracking bool, trackingSourceType *ent.GoalTrackingSourceType, trackingSourceID *string) (*ent.GoalEntity, error)
+	GetGoalByID(ctx context.Context, id string) (*ent.GoalEntity, error)
+	UpdateGoal(ctx context.Context, id string, name *string, targetAmount *float64, startAmount *float64, currentAmount *float64, startDate *time.Time, targetDate *time.Time, status *ent.GoalStatus, autoTracking *bool, trackingSourceType *ent.GoalTrackingSourceType, trackingSourceID *string) (*ent.GoalEntity, error)
+	DeleteGoal(ctx context.Context, id string) error
+	ListGoals(ctx context.Context, memberID *string, status *ent.GoalStatus, goalType *ent.GoalType) ([]*ent.GoalEntity, error)
+}
+
+type GoalEntryEntity interface {
+	CreateGoalEntry(ctx context.Context, goalID string, memberID *string, sourceType ent.GoalEntrySourceType, sourceID *string, amountBefore float64, amountAfter float64, amountDelta float64, note string) (*ent.GoalEntryEntity, error)
+	ListGoalEntries(ctx context.Context, goalID string, memberID *string) ([]*ent.GoalEntryEntity, error)
+}
+
 type MemberNotificationEntity interface {
 	CreateMemberNotification(ctx context.Context, memberID string, notificationType ent.MemberNotificationType, level ent.MemberNotificationLevel, title string, description string, dedupeKey *string) (*ent.MemberNotificationEntity, error)
 	ListMemberNotifications(ctx context.Context, memberID string, includeRead bool, limit int) ([]*ent.MemberNotificationEntity, error)

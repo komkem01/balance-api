@@ -760,3 +760,26 @@ func ownerLoanByParamMiddleware(mod *modules.Modules) gin.HandlerFunc {
 		ctx.Next()
 	}
 }
+
+func ownerGoalByParamMiddleware(mod *modules.Modules) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		memberID, _ := ctx.Get("member_id")
+		memberIDStr, _ := memberID.(string)
+
+		goalID := strings.TrimSpace(ctx.Param("id"))
+		goal, err := mod.ENT.Svc.GetGoalByID(ctx, goalID)
+		if err != nil {
+			_ = base.BadRequest(ctx, "goal-invalid-id", gin.H{"field": "id", "reason": "invalid"})
+			ctx.Abort()
+			return
+		}
+
+		if goal.MemberID == nil || goal.MemberID.String() != memberIDStr {
+			_ = base.Unauthorized(ctx, "unauthorized", gin.H{"reason": "forbidden-goal"})
+			ctx.Abort()
+			return
+		}
+
+		ctx.Next()
+	}
+}

@@ -72,7 +72,7 @@ func (s *Service) UpdateLoan(ctx context.Context, req *UpdateRequestService) (*U
 		}
 		return nil, err
 	}
-	return &UpdateResponseService{
+	res := &UpdateResponseService{
 		ID:               item.ID,
 		MemberID:         item.MemberID,
 		Name:             item.Name,
@@ -85,5 +85,11 @@ func (s *Service) UpdateLoan(ctx context.Context, req *UpdateRequestService) (*U
 		EndDate:          item.EndDate,
 		CreatedAt:        item.CreatedAt,
 		UpdatedAt:        item.UpdatedAt,
-	}, nil
+	}
+
+	if err := s.recalculateGoalsByLoanUpdate(ctx, res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }

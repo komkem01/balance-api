@@ -6,6 +6,7 @@ import (
 	"balance/app/modules/example"
 	exampletwo "balance/app/modules/example-two"
 	genders "balance/app/modules/genders"
+	"balance/app/modules/goals"
 	"balance/app/modules/loans"
 	memberaccounts "balance/app/modules/member-accounts"
 	members "balance/app/modules/members"
@@ -58,6 +59,7 @@ type Config struct {
 	Transaction   transactions.Config
 	Budget        budgets.Config
 	Loan          loans.Config
+	Goal          goals.Config
 }
 
 var App = Config{

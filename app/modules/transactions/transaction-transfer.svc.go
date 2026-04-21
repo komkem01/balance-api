@@ -122,6 +122,11 @@ func (s *Service) TransferBetweenWallets(ctx context.Context, req *TransferReque
 		return nil, err
 	}
 
+	sourceID := fromTx.ID.String()
+	if err := s.recalculateGoalsByWalletChanges(ctx, []string{fromWalletID, toWalletID}, &sourceID); err != nil {
+		return nil, err
+	}
+
 	return &TransferResponseService{
 		FromTransaction: &CreateResponseService{
 			ID:              fromTx.ID,

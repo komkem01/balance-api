@@ -143,6 +143,13 @@ func (s *Service) CreateTransaction(ctx context.Context, req *CreateRequestServi
 		return nil, err
 	}
 
+	if item.WalletID != nil {
+		sourceID := item.ID.String()
+		if err := s.recalculateGoalsByWalletChanges(ctx, []string{item.WalletID.String()}, &sourceID); err != nil {
+			return nil, err
+		}
+	}
+
 	s.notifyForExpenseTransaction(ctx, item)
 
 	return &CreateResponseService{

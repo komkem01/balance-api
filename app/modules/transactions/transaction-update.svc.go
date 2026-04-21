@@ -41,6 +41,15 @@ func (s *Service) UpdateTransaction(ctx context.Context, req *UpdateRequestServi
 	if _, err := uuid.Parse(req.ID); err != nil {
 		return nil, ErrTransactionInvalidID
 	}
+
+	prevItem, err := s.db.GetTransactionByID(ctx, req.ID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrTransactionNotFound
+		}
+		return nil, err
+	}
+
 	if req.WalletID == nil && req.CategoryID == nil && req.Amount == nil && req.Type == nil && req.TransactionDate == nil && req.Note == nil && req.ImageURL == nil {
 		return nil, ErrTransactionNoFieldsToUpdate
 	}
@@ -100,6 +109,18 @@ func (s *Service) UpdateTransaction(ctx context.Context, req *UpdateRequestServi
 		if errors.Is(err, entities.ErrWalletBalanceInsufficient) {
 			return nil, ErrTransactionInsufficientFunds
 		}
+		return nil, err
+	}
+
+	walletIDs := make([]string, 0, 2)
+	if prevItem.WalletID != nil {
+		walletIDs = append(walletIDs, prevItem.WalletID.String())
+	}
+	if item.WalletID != nil {
+		walletIDs = append(walletIDs, item.WalletID.String())
+	}
+	sourceID := item.ID.String()
+	if err := s.recalculateGoalsByWalletChanges(ctx, walletIDs, &sourceID); err != nil {
 		return nil, err
 	}
 

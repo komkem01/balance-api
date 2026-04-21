@@ -127,6 +127,16 @@ func apiBalance(r *gin.RouterGroup, mod *modules.Modules) {
 			loanRoutes.DELETE("/:id", requireMemberJWT(mod), ownerLoanByParamMiddleware(mod), mod.Loan.Ctl.DeleteLoanController)
 		}
 
+		goals := Balances.Group("/goals")
+		{
+			goals.GET("", requireMemberJWT(mod), forceMemberIDQueryMiddleware("member_id"), mod.Goal.Ctl.ListGoalController)
+			goals.POST("", requireMemberJWT(mod), forceMemberIDBodyMiddleware(), mod.Goal.Ctl.CreateGoalController)
+			goals.GET("/:id", requireMemberJWT(mod), ownerGoalByParamMiddleware(mod), mod.Goal.Ctl.InfoGoalController)
+			goals.GET("/:id/entries", requireMemberJWT(mod), ownerGoalByParamMiddleware(mod), forceMemberIDQueryMiddleware("member_id"), mod.Goal.Ctl.ListGoalEntriesController)
+			goals.PATCH("/:id", requireMemberJWT(mod), ownerGoalByParamMiddleware(mod), mod.Goal.Ctl.UpdateGoalController)
+			goals.DELETE("/:id", requireMemberJWT(mod), ownerGoalByParamMiddleware(mod), mod.Goal.Ctl.DeleteGoalController)
+		}
+
 		storages := Balances.Group("/storage")
 		{
 			storages.GET("/slips/:id", requireMemberJWT(mod), ownerStorageReadMiddleware(mod), mod.Storage.Ctl.GetTransactionSlipController)
