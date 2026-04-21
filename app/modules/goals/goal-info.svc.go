@@ -29,6 +29,7 @@ type InfoResponseService struct {
 	AutoTracking       bool                        `json:"auto_tracking"`
 	TrackingSourceType *ent.GoalTrackingSourceType `json:"tracking_source_type"`
 	TrackingSourceID   *uuid.UUID                  `json:"tracking_source_id"`
+	DepositWalletID    *uuid.UUID                  `json:"deposit_wallet_id"`
 	CreatedAt          time.Time                   `json:"created_at"`
 	UpdatedAt          time.Time                   `json:"updated_at"`
 }
@@ -60,6 +61,7 @@ func (s *Service) InfoGoal(ctx context.Context, req *InfoRequestService) (*InfoR
 		AutoTracking:       item.AutoTracking,
 		TrackingSourceType: item.TrackingSourceType,
 		TrackingSourceID:   item.TrackingSourceID,
+		DepositWalletID:    item.DepositWalletID,
 		CreatedAt:          item.CreatedAt,
 		UpdatedAt:          item.UpdatedAt,
 	}

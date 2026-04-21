@@ -25,6 +25,7 @@ type CreateRequestService struct {
 	AutoTracking       *bool                       `json:"auto_tracking"`
 	TrackingSourceType *ent.GoalTrackingSourceType `json:"tracking_source_type"`
 	TrackingSourceID   *string                     `json:"tracking_source_id"`
+	DepositWalletID    *string                     `json:"deposit_wallet_id"`
 }
 
 type CreateResponseService struct {
@@ -41,6 +42,7 @@ type CreateResponseService struct {
 	AutoTracking       bool                        `json:"auto_tracking"`
 	TrackingSourceType *ent.GoalTrackingSourceType `json:"tracking_source_type"`
 	TrackingSourceID   *uuid.UUID                  `json:"tracking_source_id"`
+	DepositWalletID    *uuid.UUID                  `json:"deposit_wallet_id"`
 	CreatedAt          time.Time                   `json:"created_at"`
 	UpdatedAt          time.Time                   `json:"updated_at"`
 }
@@ -78,6 +80,9 @@ func (s *Service) resolveSourceCurrentAmount(ctx context.Context, memberID *stri
 		}
 		wallet, err := s.db.GetWalletByID(ctx, *sid)
 		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return 0, ErrGoalSourceIDInvalid
+			}
 			return 0, err
 		}
 		if memberID != nil {
@@ -109,6 +114,9 @@ func (s *Service) resolveSourceCurrentAmount(ctx context.Context, memberID *stri
 		}
 		loan, err := s.db.GetLoanByID(ctx, *sid)
 		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return 0, ErrGoalSourceIDInvalid
+			}
 			return 0, err
 		}
 		if memberID != nil {
@@ -154,6 +162,12 @@ func (s *Service) CreateGoal(ctx context.Context, req *CreateRequestService) (*C
 		autoTracking = *req.AutoTracking
 	}
 
+	if normalizedSourceID := normalizeSourceID(req.TrackingSourceID); normalizedSourceID != nil {
+		if _, err := uuid.Parse(*normalizedSourceID); err != nil {
+			return nil, ErrGoalSourceIDInvalid
+		}
+	}
+
 	if req.MemberID != nil {
 		memberID := strings.TrimSpace(*req.MemberID)
 		if memberID != "" {
@@ -169,13 +183,34 @@ func (s *Service) CreateGoal(ctx context.Context, req *CreateRequestService) (*C
 		}
 	}
 
+	if normalizedDepositWalletID := normalizeSourceID(req.DepositWalletID); normalizedDepositWalletID != nil {
+		if _, err := uuid.Parse(*normalizedDepositWalletID); err != nil {
+			return nil, ErrGoalDepositWalletInvalid
+		}
+
+		wallet, err := s.db.GetWalletByID(ctx, *normalizedDepositWalletID)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, ErrGoalDepositWalletInvalid
+			}
+			return nil, err
+		}
+
+		if req.MemberID != nil {
+			mid := strings.TrimSpace(*req.MemberID)
+			if wallet.MemberID == nil || wallet.MemberID.String() != mid {
+				return nil, ErrGoalDepositWalletForbidden
+			}
+		}
+	}
+
 	startDate, err := parseGoalDate(req.StartDate)
 	if err != nil {
-		return nil, err
+		return nil, ErrGoalStartDateInvalid
 	}
 	targetDate, err := parseGoalDate(req.TargetDate)
 	if err != nil {
-		return nil, err
+		return nil, ErrGoalTargetDateInvalid
 	}
 
 	currentAmount := req.CurrentAmount
@@ -188,8 +223,9 @@ func (s *Service) CreateGoal(ctx context.Context, req *CreateRequestService) (*C
 	}
 
 	normalizedSourceID := normalizeSourceID(req.TrackingSourceID)
+	normalizedDepositWalletID := normalizeSourceID(req.DepositWalletID)
 
-	item, err := s.db.CreateGoal(ctx, req.MemberID, req.Name, req.Type, req.TargetAmount, req.StartAmount, currentAmount, startDate, targetDate, status, autoTracking, req.TrackingSourceType, normalizedSourceID)
+	item, err := s.db.CreateGoal(ctx, req.MemberID, req.Name, req.Type, req.TargetAmount, req.StartAmount, currentAmount, startDate, targetDate, status, autoTracking, req.TrackingSourceType, normalizedSourceID, normalizedDepositWalletID)
 	if err != nil {
 		return nil, err
 	}
@@ -208,6 +244,7 @@ func (s *Service) CreateGoal(ctx context.Context, req *CreateRequestService) (*C
 		AutoTracking:       item.AutoTracking,
 		TrackingSourceType: item.TrackingSourceType,
 		TrackingSourceID:   item.TrackingSourceID,
+		DepositWalletID:    item.DepositWalletID,
 		CreatedAt:          item.CreatedAt,
 		UpdatedAt:          item.UpdatedAt,
 	}, nil

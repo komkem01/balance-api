@@ -42,13 +42,13 @@ func (s *Service) recalculateGoalsByLoanUpdate(ctx context.Context, item *Update
 		}
 
 		currentAmount := nextAmount
-		_, err := s.db.UpdateGoal(ctx, goal.ID.String(), nil, nil, nil, &currentAmount, nil, nil, nil, nil, nil, nil)
+		_, err := s.db.UpdateGoal(ctx, goal.ID.String(), nil, nil, nil, &currentAmount, nil, nil, nil, nil, nil, nil, nil)
 		if err != nil {
 			return err
 		}
 
 		sourceID := loanID
-		note := fmt.Sprintf("Auto recalculated from %s update", ent.GoalEntrySourceTypeLoan)
+		note := fmt.Sprintf("GOAL_ENTRY|source=loan|action=auto_recalculate|loan_id=%s", loanID)
 		_, err = s.db.CreateGoalEntry(
 			ctx,
 			goal.ID.String(),

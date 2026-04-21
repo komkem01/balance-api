@@ -87,7 +87,7 @@ func (s *Service) recalculateGoalsByWalletChanges(ctx context.Context, walletIDs
 			}
 
 			currentAmount := nextAmount
-			_, err := s.db.UpdateGoal(ctx, goal.ID.String(), nil, nil, nil, &currentAmount, nil, nil, nil, nil, nil, nil)
+			_, err := s.db.UpdateGoal(ctx, goal.ID.String(), nil, nil, nil, &currentAmount, nil, nil, nil, nil, nil, nil, nil)
 			if err != nil {
 				return err
 			}

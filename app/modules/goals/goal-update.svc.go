@@ -23,6 +23,7 @@ type UpdateRequestService struct {
 	AutoTracking       *bool                       `json:"auto_tracking"`
 	TrackingSourceType *ent.GoalTrackingSourceType `json:"tracking_source_type"`
 	TrackingSourceID   *string                     `json:"tracking_source_id"`
+	DepositWalletID    *string                     `json:"deposit_wallet_id"`
 }
 
 func (s *Service) UpdateGoal(ctx context.Context, req *UpdateRequestService) (*InfoResponseService, error) {
@@ -30,7 +31,7 @@ func (s *Service) UpdateGoal(ctx context.Context, req *UpdateRequestService) (*I
 		return nil, ErrGoalInvalidID
 	}
 
-	if req.Name == nil && req.TargetAmount == nil && req.StartAmount == nil && req.CurrentAmount == nil && req.StartDate == nil && req.TargetDate == nil && req.Status == nil && req.AutoTracking == nil && req.TrackingSourceType == nil && req.TrackingSourceID == nil {
+	if req.Name == nil && req.TargetAmount == nil && req.StartAmount == nil && req.CurrentAmount == nil && req.StartDate == nil && req.TargetDate == nil && req.Status == nil && req.AutoTracking == nil && req.TrackingSourceType == nil && req.TrackingSourceID == nil && req.DepositWalletID == nil {
 		return nil, ErrGoalNoFieldsToUpdate
 	}
 
@@ -50,13 +51,19 @@ func (s *Service) UpdateGoal(ctx context.Context, req *UpdateRequestService) (*I
 		return nil, ErrGoalSourceTypeInvalid
 	}
 
+	if normalizedSourceID := normalizeSourceID(req.TrackingSourceID); normalizedSourceID != nil {
+		if _, err := uuid.Parse(*normalizedSourceID); err != nil {
+			return nil, ErrGoalSourceIDInvalid
+		}
+	}
+
 	startDate, err := parseGoalDate(req.StartDate)
 	if err != nil {
-		return nil, err
+		return nil, ErrGoalStartDateInvalid
 	}
 	targetDate, err := parseGoalDate(req.TargetDate)
 	if err != nil {
-		return nil, err
+		return nil, ErrGoalTargetDateInvalid
 	}
 
 	item, err := s.db.GetGoalByID(ctx, req.ID)
@@ -65,6 +72,27 @@ func (s *Service) UpdateGoal(ctx context.Context, req *UpdateRequestService) (*I
 			return nil, ErrGoalNotFound
 		}
 		return nil, err
+	}
+
+	if normalizedDepositWalletID := normalizeSourceID(req.DepositWalletID); normalizedDepositWalletID != nil {
+		if _, err := uuid.Parse(*normalizedDepositWalletID); err != nil {
+			return nil, ErrGoalDepositWalletInvalid
+		}
+
+		wallet, err := s.db.GetWalletByID(ctx, *normalizedDepositWalletID)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, ErrGoalDepositWalletInvalid
+			}
+			return nil, err
+		}
+
+		if item.MemberID != nil {
+			mid := item.MemberID.String()
+			if wallet.MemberID == nil || wallet.MemberID.String() != mid {
+				return nil, ErrGoalDepositWalletForbidden
+			}
+		}
 	}
 
 	normalizedSourceID := normalizeSourceID(req.TrackingSourceID)
@@ -98,7 +126,9 @@ func (s *Service) UpdateGoal(ctx context.Context, req *UpdateRequestService) (*I
 		req.CurrentAmount = &currentAmount
 	}
 
-	updated, err := s.db.UpdateGoal(ctx, req.ID, req.Name, req.TargetAmount, req.StartAmount, req.CurrentAmount, startDate, targetDate, req.Status, req.AutoTracking, req.TrackingSourceType, normalizedSourceID)
+	normalizedDepositWalletID := normalizeSourceID(req.DepositWalletID)
+
+	updated, err := s.db.UpdateGoal(ctx, req.ID, req.Name, req.TargetAmount, req.StartAmount, req.CurrentAmount, startDate, targetDate, req.Status, req.AutoTracking, req.TrackingSourceType, normalizedSourceID, normalizedDepositWalletID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrGoalNotFound
@@ -120,6 +150,7 @@ func (s *Service) UpdateGoal(ctx context.Context, req *UpdateRequestService) (*I
 		AutoTracking:       updated.AutoTracking,
 		TrackingSourceType: updated.TrackingSourceType,
 		TrackingSourceID:   updated.TrackingSourceID,
+		DepositWalletID:    updated.DepositWalletID,
 		CreatedAt:          updated.CreatedAt,
 		UpdatedAt:          updated.UpdatedAt,
 	}

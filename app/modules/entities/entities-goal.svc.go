@@ -27,12 +27,16 @@ func parseGoalUUID(value *string) (*uuid.UUID, error) {
 	return &id, nil
 }
 
-func (s *Service) CreateGoal(ctx context.Context, memberID *string, name string, goalType ent.GoalType, targetAmount float64, startAmount float64, currentAmount float64, startDate *time.Time, targetDate *time.Time, status ent.GoalStatus, autoTracking bool, trackingSourceType *ent.GoalTrackingSourceType, trackingSourceID *string) (*ent.GoalEntity, error) {
+func (s *Service) CreateGoal(ctx context.Context, memberID *string, name string, goalType ent.GoalType, targetAmount float64, startAmount float64, currentAmount float64, startDate *time.Time, targetDate *time.Time, status ent.GoalStatus, autoTracking bool, trackingSourceType *ent.GoalTrackingSourceType, trackingSourceID *string, depositWalletID *string) (*ent.GoalEntity, error) {
 	mid, err := parseGoalUUID(memberID)
 	if err != nil {
 		return nil, err
 	}
 	sid, err := parseGoalUUID(trackingSourceID)
+	if err != nil {
+		return nil, err
+	}
+	did, err := parseGoalUUID(depositWalletID)
 	if err != nil {
 		return nil, err
 	}
@@ -51,6 +55,7 @@ func (s *Service) CreateGoal(ctx context.Context, memberID *string, name string,
 		AutoTracking:       autoTracking,
 		TrackingSourceType: trackingSourceType,
 		TrackingSourceID:   sid,
+		DepositWalletID:    did,
 	}
 
 	_, err = s.db.NewInsert().Model(model).Exec(ctx)
@@ -72,7 +77,7 @@ func (s *Service) GetGoalByID(ctx context.Context, id string) (*ent.GoalEntity, 
 	return model, nil
 }
 
-func (s *Service) UpdateGoal(ctx context.Context, id string, name *string, targetAmount *float64, startAmount *float64, currentAmount *float64, startDate *time.Time, targetDate *time.Time, status *ent.GoalStatus, autoTracking *bool, trackingSourceType *ent.GoalTrackingSourceType, trackingSourceID *string) (*ent.GoalEntity, error) {
+func (s *Service) UpdateGoal(ctx context.Context, id string, name *string, targetAmount *float64, startAmount *float64, currentAmount *float64, startDate *time.Time, targetDate *time.Time, status *ent.GoalStatus, autoTracking *bool, trackingSourceType *ent.GoalTrackingSourceType, trackingSourceID *string, depositWalletID *string) (*ent.GoalEntity, error) {
 	uid, err := uuid.Parse(id)
 	if err != nil {
 		return nil, err
@@ -117,13 +122,20 @@ func (s *Service) UpdateGoal(ctx context.Context, id string, name *string, targe
 		}
 		model.TrackingSourceID = sid
 	}
+	if depositWalletID != nil {
+		did, err := parseGoalUUID(depositWalletID)
+		if err != nil {
+			return nil, err
+		}
+		model.DepositWalletID = did
+	}
 
 	model.UpdatedAt = time.Now()
 
 	_, err = s.db.NewUpdate().
 		Model(model).
 		WherePK().
-		Column("name", "target_amount", "start_amount", "current_amount", "start_date", "target_date", "status", "auto_tracking", "tracking_source_type", "tracking_source_id", "updated_at").
+		Column("name", "target_amount", "start_amount", "current_amount", "start_date", "target_date", "status", "auto_tracking", "tracking_source_type", "tracking_source_id", "deposit_wallet_id", "updated_at").
 		Exec(ctx)
 	if err != nil {
 		return nil, err

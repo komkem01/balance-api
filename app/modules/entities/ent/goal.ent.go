@@ -47,6 +47,7 @@ type GoalEntity struct {
 	AutoTracking       bool                    `bun:"type:boolean,notnull,default:true"`
 	TrackingSourceType *GoalTrackingSourceType `bun:"type:varchar"`
 	TrackingSourceID   *uuid.UUID              `bun:"type:uuid"`
+	DepositWalletID    *uuid.UUID              `bun:"type:uuid"`
 	CreatedAt          time.Time               `bun:"type:timestamptz,notnull,default:now()"`
 	UpdatedAt          time.Time               `bun:"type:timestamptz,notnull,default:now()"`
 	DeletedAt          *time.Time              `bun:"type:timestamptz,soft_delete,nullzero"`

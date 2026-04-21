@@ -24,6 +24,7 @@ type UpdateBodyController struct {
 	AutoTracking       *bool    `json:"auto_tracking"`
 	TrackingSourceType *string  `json:"tracking_source_type"`
 	TrackingSourceID   *string  `json:"tracking_source_id"`
+	DepositWalletID    *string  `json:"deposit_wallet_id"`
 }
 
 func (c *Controller) UpdateGoalController(ctx *gin.Context) {
@@ -63,6 +64,7 @@ func (c *Controller) UpdateGoalController(ctx *gin.Context) {
 		AutoTracking:       body.AutoTracking,
 		TrackingSourceType: sourceType,
 		TrackingSourceID:   body.TrackingSourceID,
+		DepositWalletID:    body.DepositWalletID,
 	})
 	if err != nil {
 		switch {
@@ -84,14 +86,29 @@ func (c *Controller) UpdateGoalController(ctx *gin.Context) {
 		case errors.Is(err, ErrGoalTargetAmountInvalid):
 			_ = base.BadRequest(ctx, "goal-target-amount-invalid", gin.H{"field": "target_amount", "reason": "invalid"})
 			return
+		case errors.Is(err, ErrGoalStartDateInvalid):
+			_ = base.BadRequest(ctx, "goal-start-date-invalid", gin.H{"field": "start_date", "reason": "invalid"})
+			return
+		case errors.Is(err, ErrGoalTargetDateInvalid):
+			_ = base.BadRequest(ctx, "goal-target-date-invalid", gin.H{"field": "target_date", "reason": "invalid"})
+			return
 		case errors.Is(err, ErrGoalSourceTypeInvalid):
 			_ = base.BadRequest(ctx, "goal-source-type-invalid", gin.H{"field": "tracking_source_type", "reason": "invalid"})
 			return
 		case errors.Is(err, ErrGoalSourceIDRequired):
 			_ = base.BadRequest(ctx, "goal-source-id-required", gin.H{"field": "tracking_source_id", "reason": "required"})
 			return
+		case errors.Is(err, ErrGoalSourceIDInvalid):
+			_ = base.BadRequest(ctx, "goal-source-id-invalid", gin.H{"field": "tracking_source_id", "reason": "invalid"})
+			return
 		case errors.Is(err, ErrGoalSourceMemberForbidden):
 			_ = base.Unauthorized(ctx, "unauthorized", gin.H{"reason": "forbidden-goal-source"})
+			return
+		case errors.Is(err, ErrGoalDepositWalletInvalid):
+			_ = base.BadRequest(ctx, "goal-deposit-wallet-id-invalid", gin.H{"field": "deposit_wallet_id", "reason": "invalid"})
+			return
+		case errors.Is(err, ErrGoalDepositWalletForbidden):
+			_ = base.Unauthorized(ctx, "unauthorized", gin.H{"reason": "forbidden-goal-deposit-wallet"})
 			return
 		default:
 			_ = base.InternalServerError(ctx, "goal-update-failed", nil)

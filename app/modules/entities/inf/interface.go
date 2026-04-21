@@ -104,9 +104,9 @@ type LoanEntity interface {
 }
 
 type GoalEntity interface {
-	CreateGoal(ctx context.Context, memberID *string, name string, goalType ent.GoalType, targetAmount float64, startAmount float64, currentAmount float64, startDate *time.Time, targetDate *time.Time, status ent.GoalStatus, autoTracking bool, trackingSourceType *ent.GoalTrackingSourceType, trackingSourceID *string) (*ent.GoalEntity, error)
+	CreateGoal(ctx context.Context, memberID *string, name string, goalType ent.GoalType, targetAmount float64, startAmount float64, currentAmount float64, startDate *time.Time, targetDate *time.Time, status ent.GoalStatus, autoTracking bool, trackingSourceType *ent.GoalTrackingSourceType, trackingSourceID *string, depositWalletID *string) (*ent.GoalEntity, error)
 	GetGoalByID(ctx context.Context, id string) (*ent.GoalEntity, error)
-	UpdateGoal(ctx context.Context, id string, name *string, targetAmount *float64, startAmount *float64, currentAmount *float64, startDate *time.Time, targetDate *time.Time, status *ent.GoalStatus, autoTracking *bool, trackingSourceType *ent.GoalTrackingSourceType, trackingSourceID *string) (*ent.GoalEntity, error)
+	UpdateGoal(ctx context.Context, id string, name *string, targetAmount *float64, startAmount *float64, currentAmount *float64, startDate *time.Time, targetDate *time.Time, status *ent.GoalStatus, autoTracking *bool, trackingSourceType *ent.GoalTrackingSourceType, trackingSourceID *string, depositWalletID *string) (*ent.GoalEntity, error)
 	DeleteGoal(ctx context.Context, id string) error
 	ListGoals(ctx context.Context, memberID *string, status *ent.GoalStatus, goalType *ent.GoalType) ([]*ent.GoalEntity, error)
 }

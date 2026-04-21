@@ -37,6 +37,7 @@ func (s *Service) ListGoal(ctx context.Context, req *ListRequestService) ([]*Inf
 			AutoTracking:       item.AutoTracking,
 			TrackingSourceType: item.TrackingSourceType,
 			TrackingSourceID:   item.TrackingSourceID,
+			DepositWalletID:    item.DepositWalletID,
 			CreatedAt:          item.CreatedAt,
 			UpdatedAt:          item.UpdatedAt,
 		}
