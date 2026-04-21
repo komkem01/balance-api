@@ -5,6 +5,7 @@ import (
 	entitiesinf "balance/app/modules/entities/inf"
 	"context"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -93,6 +94,8 @@ func (s *Service) UpdateWallet(ctx context.Context, id string, memberID *string,
 	if isActive != nil {
 		model.IsActive = *isActive
 	}
+
+	model.UpdatedAt = time.Now()
 
 	_, err = s.db.NewUpdate().
 		Model(model).
