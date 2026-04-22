@@ -22,6 +22,7 @@ type InfoResponseService struct {
 	RemainingBalance float64    `json:"remaining_balance"`
 	MonthlyPayment   float64    `json:"monthly_payment"`
 	InterestRate     float64    `json:"interest_rate"`
+	ColorCode        string     `json:"color_code"`
 	StartDate        *time.Time `json:"start_date"`
 	EndDate          *time.Time `json:"end_date"`
 	CreatedAt        time.Time  `json:"created_at"`
@@ -48,6 +49,7 @@ func (s *Service) InfoLoan(ctx context.Context, req *InfoRequestService) (*InfoR
 		RemainingBalance: item.RemainingBalance,
 		MonthlyPayment:   item.MonthlyPayment,
 		InterestRate:     item.InterestRate,
+		ColorCode:        item.ColorCode,
 		StartDate:        item.StartDate,
 		EndDate:          item.EndDate,
 		CreatedAt:        item.CreatedAt,

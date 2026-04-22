@@ -18,6 +18,7 @@ type UpdateRequestService struct {
 	RemainingBalance *float64 `json:"remaining_balance"`
 	MonthlyPayment   *float64 `json:"monthly_payment"`
 	InterestRate     *float64 `json:"interest_rate"`
+	ColorCode        *string  `json:"color_code"`
 	StartDate        *string  `json:"start_date"`
 	EndDate          *string  `json:"end_date"`
 }
@@ -31,6 +32,7 @@ type UpdateResponseService struct {
 	RemainingBalance float64    `json:"remaining_balance"`
 	MonthlyPayment   float64    `json:"monthly_payment"`
 	InterestRate     float64    `json:"interest_rate"`
+	ColorCode        string     `json:"color_code"`
 	StartDate        *time.Time `json:"start_date"`
 	EndDate          *time.Time `json:"end_date"`
 	CreatedAt        time.Time  `json:"created_at"`
@@ -41,7 +43,7 @@ func (s *Service) UpdateLoan(ctx context.Context, req *UpdateRequestService) (*U
 	if _, err := uuid.Parse(req.ID); err != nil {
 		return nil, ErrLoanInvalidID
 	}
-	if req.Name == nil && req.Lender == nil && req.TotalAmount == nil && req.RemainingBalance == nil && req.MonthlyPayment == nil && req.InterestRate == nil && req.StartDate == nil && req.EndDate == nil {
+	if req.Name == nil && req.Lender == nil && req.TotalAmount == nil && req.RemainingBalance == nil && req.MonthlyPayment == nil && req.InterestRate == nil && req.ColorCode == nil && req.StartDate == nil && req.EndDate == nil {
 		return nil, ErrLoanNoFieldsToUpdate
 	}
 	if req.Name != nil && strings.TrimSpace(*req.Name) == "" {
@@ -52,7 +54,7 @@ func (s *Service) UpdateLoan(ctx context.Context, req *UpdateRequestService) (*U
 	if req.StartDate != nil {
 		d, err := parseLoanDate(req.StartDate)
 		if err != nil {
-			return nil, err
+			return nil, ErrLoanStartDateInvalid
 		}
 		startDate = d
 	}
@@ -60,12 +62,18 @@ func (s *Service) UpdateLoan(ctx context.Context, req *UpdateRequestService) (*U
 	if req.EndDate != nil {
 		d, err := parseLoanDate(req.EndDate)
 		if err != nil {
-			return nil, err
+			return nil, ErrLoanEndDateInvalid
 		}
 		endDate = d
 	}
 
-	item, err := s.db.UpdateLoan(ctx, req.ID, req.Name, req.Lender, req.TotalAmount, req.RemainingBalance, req.MonthlyPayment, req.InterestRate, startDate, endDate)
+	var colorCode *string
+	if req.ColorCode != nil {
+		v := normalizeLoanColorCode(req.ColorCode)
+		colorCode = &v
+	}
+
+	item, err := s.db.UpdateLoan(ctx, req.ID, req.Name, req.Lender, req.TotalAmount, req.RemainingBalance, req.MonthlyPayment, req.InterestRate, colorCode, startDate, endDate)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrLoanNotFound
@@ -81,6 +89,7 @@ func (s *Service) UpdateLoan(ctx context.Context, req *UpdateRequestService) (*U
 		RemainingBalance: item.RemainingBalance,
 		MonthlyPayment:   item.MonthlyPayment,
 		InterestRate:     item.InterestRate,
+		ColorCode:        item.ColorCode,
 		StartDate:        item.StartDate,
 		EndDate:          item.EndDate,
 		CreatedAt:        item.CreatedAt,

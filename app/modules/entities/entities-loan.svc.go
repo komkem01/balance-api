@@ -12,7 +12,7 @@ import (
 
 var _ entitiesinf.LoanEntity = (*Service)(nil)
 
-func (s *Service) CreateLoan(ctx context.Context, memberID *string, name string, lender string, totalAmount float64, remainingBalance float64, monthlyPayment float64, interestRate float64, startDate *time.Time, endDate *time.Time) (*ent.LoanEntity, error) {
+func (s *Service) CreateLoan(ctx context.Context, memberID *string, name string, lender string, totalAmount float64, remainingBalance float64, monthlyPayment float64, interestRate float64, colorCode string, startDate *time.Time, endDate *time.Time) (*ent.LoanEntity, error) {
 	var mid *uuid.UUID
 	if memberID != nil {
 		v := strings.TrimSpace(*memberID)
@@ -34,6 +34,7 @@ func (s *Service) CreateLoan(ctx context.Context, memberID *string, name string,
 		RemainingBalance: remainingBalance,
 		MonthlyPayment:   monthlyPayment,
 		InterestRate:     interestRate,
+		ColorCode:        strings.TrimSpace(colorCode),
 		StartDate:        startDate,
 		EndDate:          endDate,
 	}
@@ -57,7 +58,7 @@ func (s *Service) GetLoanByID(ctx context.Context, id string) (*ent.LoanEntity, 
 	return model, nil
 }
 
-func (s *Service) UpdateLoan(ctx context.Context, id string, name *string, lender *string, totalAmount *float64, remainingBalance *float64, monthlyPayment *float64, interestRate *float64, startDate *time.Time, endDate *time.Time) (*ent.LoanEntity, error) {
+func (s *Service) UpdateLoan(ctx context.Context, id string, name *string, lender *string, totalAmount *float64, remainingBalance *float64, monthlyPayment *float64, interestRate *float64, colorCode *string, startDate *time.Time, endDate *time.Time) (*ent.LoanEntity, error) {
 	uid, err := uuid.Parse(id)
 	if err != nil {
 		return nil, err
@@ -85,6 +86,9 @@ func (s *Service) UpdateLoan(ctx context.Context, id string, name *string, lende
 	if interestRate != nil {
 		model.InterestRate = *interestRate
 	}
+	if colorCode != nil {
+		model.ColorCode = strings.TrimSpace(*colorCode)
+	}
 	if startDate != nil {
 		model.StartDate = startDate
 	}
@@ -96,7 +100,7 @@ func (s *Service) UpdateLoan(ctx context.Context, id string, name *string, lende
 	_, err = s.db.NewUpdate().
 		Model(model).
 		WherePK().
-		Column("name", "lender", "total_amount", "remaining_balance", "monthly_payment", "interest_rate", "start_date", "end_date", "updated_at").
+		Column("name", "lender", "total_amount", "remaining_balance", "monthly_payment", "interest_rate", "color_code", "start_date", "end_date", "updated_at").
 		Exec(ctx)
 	if err != nil {
 		return nil, err

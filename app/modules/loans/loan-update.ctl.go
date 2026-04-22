@@ -19,6 +19,7 @@ type UpdateBodyController struct {
 	RemainingBalance *float64 `json:"remaining_balance"`
 	MonthlyPayment   *float64 `json:"monthly_payment"`
 	InterestRate     *float64 `json:"interest_rate"`
+	ColorCode        *string  `json:"color_code"`
 	StartDate        *string  `json:"start_date"`
 	EndDate          *string  `json:"end_date"`
 }
@@ -43,6 +44,7 @@ func (c *Controller) UpdateLoanController(ctx *gin.Context) {
 		RemainingBalance: body.RemainingBalance,
 		MonthlyPayment:   body.MonthlyPayment,
 		InterestRate:     body.InterestRate,
+		ColorCode:        body.ColorCode,
 		StartDate:        body.StartDate,
 		EndDate:          body.EndDate,
 	})
@@ -61,6 +63,14 @@ func (c *Controller) UpdateLoanController(ctx *gin.Context) {
 		}
 		if errors.Is(err, ErrLoanNoFieldsToUpdate) {
 			_ = base.BadRequest(ctx, "invalid-request", nil)
+			return
+		}
+		if errors.Is(err, ErrLoanStartDateInvalid) {
+			_ = base.BadRequest(ctx, "loan-start-date-invalid", gin.H{"field": "start_date", "reason": "invalid", "format": "2006-01-02"})
+			return
+		}
+		if errors.Is(err, ErrLoanEndDateInvalid) {
+			_ = base.BadRequest(ctx, "loan-end-date-invalid", gin.H{"field": "end_date", "reason": "invalid", "format": "2006-01-02"})
 			return
 		}
 		_ = base.InternalServerError(ctx, "loan-update-failed", nil)

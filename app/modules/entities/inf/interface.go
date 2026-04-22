@@ -96,9 +96,9 @@ type BudgetEntity interface {
 }
 
 type LoanEntity interface {
-	CreateLoan(ctx context.Context, memberID *string, name string, lender string, totalAmount float64, remainingBalance float64, monthlyPayment float64, interestRate float64, startDate *time.Time, endDate *time.Time) (*ent.LoanEntity, error)
+	CreateLoan(ctx context.Context, memberID *string, name string, lender string, totalAmount float64, remainingBalance float64, monthlyPayment float64, interestRate float64, colorCode string, startDate *time.Time, endDate *time.Time) (*ent.LoanEntity, error)
 	GetLoanByID(ctx context.Context, id string) (*ent.LoanEntity, error)
-	UpdateLoan(ctx context.Context, id string, name *string, lender *string, totalAmount *float64, remainingBalance *float64, monthlyPayment *float64, interestRate *float64, startDate *time.Time, endDate *time.Time) (*ent.LoanEntity, error)
+	UpdateLoan(ctx context.Context, id string, name *string, lender *string, totalAmount *float64, remainingBalance *float64, monthlyPayment *float64, interestRate *float64, colorCode *string, startDate *time.Time, endDate *time.Time) (*ent.LoanEntity, error)
 	DeleteLoan(ctx context.Context, id string) error
 	ListLoans(ctx context.Context, memberID *string) ([]*ent.LoanEntity, error)
 }
